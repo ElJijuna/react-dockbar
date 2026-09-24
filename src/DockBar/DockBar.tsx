@@ -3,6 +3,7 @@ import {
   type MouseEvent,
   type ReactElement,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -31,6 +32,7 @@ export const DockBar = ({
   items,
   activeId: activeIdProp,
   defaultActiveId = null,
+  openActiveLevel = false,
   colorScheme = 'auto',
   variant = 'glass',
   size = 'md',
@@ -56,6 +58,20 @@ export const DockBar = ({
     () => (activeId ? findItemPath(items, activeId).map((item) => item.id) : []),
     [items, activeId],
   );
+
+  // Captured once on mount: the parents to open when `openActiveLevel` is set.
+  const [initialPathIds] = useState(() =>
+    openActiveLevel && activeId
+      ? findItemPath(items, activeId)
+          .slice(0, -1)
+          .map((item) => item.id)
+      : [],
+  );
+  // A Back bubble that is already there on mount should not play its entrance animation.
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const osReducedMotion = useReducedMotion();
   const instant =
@@ -99,6 +115,7 @@ export const DockBar = ({
     animationDuration,
     instant,
     onNavigate: handleNavigate,
+    initialPathIds,
   });
 
   // Move focus to the newly-revealed Back button (drilling in) or back to the item the
@@ -193,6 +210,7 @@ export const DockBar = ({
     >
       {depth > 0 ? (
         <DockBarBackButton
+          skipIntro={!hasMounted}
           item={resolvedBackItem}
           ariaLabel={backAriaLabel}
           leaving={backLeaving}

@@ -45,7 +45,9 @@ function AppMenuBar() {
   reverses the animation back up one level. Spacing is tunable via `--dockbar-back-gap`.
 - **Active item**: pass `activeId` (controlled, e.g. from your router) or `defaultActiveId`
   (uncontrolled; activating a leaf makes it active). The active item gets a dot indicator and
-  `aria-current`; parents containing a nested active item get a dimmer dot.
+  `aria-current`; parents containing a nested active item get a dimmer dot. Add
+  `openActiveLevel` to start inside the submenu that holds the active item (mount only — later
+  `activeId` changes never move the user away from the level they are browsing).
 - **Hover magnification**: items scale up under the pointer, tapering off for nearby
   neighbors, matching macOS Dock behavior. Defaults depend on the variant (pronounced for
   `glass`/`solid`, subtle for `pill`); pass `magnification={{ scale, distance }}` to override

@@ -5,6 +5,8 @@ import styles from './DockBarBackButton.module.css';
 import { DockBarItemButton } from './DockBarItemButton';
 
 export interface DockBarBackButtonProps {
+  /** Skip the entrance animation (the bubble was already there when the dock mounted). */
+  skipIntro: boolean;
   item: DockBarItem;
   ariaLabel: string;
   /** Plays the exit animation while the dock collapses back to the root level. */
@@ -20,6 +22,7 @@ export interface DockBarBackButtonProps {
 
 /** Circular Back control rendered beside (not inside) the dock while in a nested level. */
 export const DockBarBackButton = ({
+  skipIntro: skipIntroProp,
   item,
   ariaLabel,
   leaving,
@@ -29,6 +32,8 @@ export const DockBarBackButton = ({
   onActivate,
 }: DockBarBackButtonProps): ReactElement => {
   const [hovered, setHovered] = useState(false);
+  // Decided once per bubble: later bubbles (after real navigation) animate normally.
+  const [skipIntro] = useState(skipIntroProp);
   const style = { '--dockbar-transition-duration': `${animationDuration}ms` } as CSSProperties;
 
   return (
@@ -37,6 +42,7 @@ export const DockBarBackButton = ({
       className={styles.backArea}
       data-dockbar-part="back-area"
       data-dockbar-leaving={leaving || undefined}
+      data-dockbar-static={skipIntro || undefined}
       style={style}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

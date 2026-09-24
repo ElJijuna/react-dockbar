@@ -103,6 +103,8 @@ export interface UseDockBarNavigationOptions {
   /** Skip waiting for CSS transitions entirely and resolve navigation synchronously. */
   instant?: boolean;
   onNavigate?: (event: DockBarNavigateEvent) => void;
+  /** Parent ids to start inside (root-first). Read on mount only; ids that don't resolve are dropped. */
+  initialPathIds?: string[];
 }
 
 export interface UseDockBarNavigationResult {
@@ -127,9 +129,13 @@ export function useDockBarNavigation(
     animationDuration = DEFAULT_ANIMATION_DURATION_MS,
     instant = false,
     onNavigate,
+    initialPathIds,
   }: UseDockBarNavigationOptions,
 ): UseDockBarNavigationResult {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialPathIds, (pathIds = []) => ({
+    ...initialState,
+    pathIds,
+  }));
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

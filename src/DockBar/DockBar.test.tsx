@@ -652,6 +652,102 @@ describe('DockBar', () => {
     });
   });
 
+  describe('openActiveLevel', () => {
+    const tree = (): DockBarEntry[] => [
+      { id: 'finder', label: 'Finder', icon: <span>F</span> },
+      {
+        id: 'settings',
+        label: 'Settings',
+        icon: <span>S</span>,
+        children: [
+          { id: 'wifi', label: 'Wi-Fi', icon: <span>W</span> },
+          {
+            id: 'network',
+            label: 'Network',
+            icon: <span>N</span>,
+            children: [
+              { id: 'vpn', label: 'VPN', icon: <span>V</span> },
+              { id: 'proxy', label: 'Proxy', icon: <span>P</span> },
+            ],
+          },
+        ],
+      },
+    ];
+    const backArea = (container: HTMLElement) =>
+      container.querySelector('[data-dockbar-part="back-area"]');
+
+    it('opens directly on the level that contains the active item', () => {
+      const { container } = render(<DockBar items={tree()} activeId="vpn" openActiveLevel />);
+
+      expect(screen.getByRole('button', { name: 'VPN' })).toHaveAttribute('aria-current', 'true');
+      expect(screen.getByRole('button', { name: 'Back to Settings' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Finder' })).not.toBeInTheDocument();
+      expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
+    });
+
+    it('works with defaultActiveId too', () => {
+      render(<DockBar items={tree()} defaultActiveId="wifi" openActiveLevel />);
+      expect(screen.getByRole('button', { name: 'Wi-Fi' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    });
+
+    it('stays at the root without the prop, or when the active id does not exist', () => {
+      const { unmount } = render(<DockBar items={tree()} activeId="vpn" />);
+      expect(screen.getByRole('button', { name: 'Finder' })).toBeInTheDocument();
+      unmount();
+
+      render(<DockBar items={tree()} activeId="missing" openActiveLevel />);
+      expect(screen.getByRole('button', { name: 'Finder' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Back/ })).not.toBeInTheDocument();
+    });
+
+    it('does not steal focus, fire onNavigate, or animate the Back bubble on mount', () => {
+      const onNavigate = jest.fn();
+      const { container } = render(
+        <DockBar items={tree()} activeId="vpn" openActiveLevel onNavigate={onNavigate} />,
+      );
+
+      expect(document.body).toHaveFocus();
+      expect(onNavigate).not.toHaveBeenCalled();
+      expect(backArea(container)).toHaveAttribute('data-dockbar-static');
+    });
+
+    it('enters with Tab on the active item', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={tree()} activeId="proxy" openActiveLevel />);
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Proxy' })).toHaveFocus();
+    });
+
+    it('does not jump levels when activeId changes after mount', () => {
+      const { rerender } = render(<DockBar items={tree()} activeId="vpn" openActiveLevel />);
+      rerender(<DockBar items={tree()} activeId="finder" openActiveLevel />);
+
+      expect(screen.getByRole('button', { name: 'VPN' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Finder' })).not.toBeInTheDocument();
+    });
+
+    it('navigates back up normally, and a later Back bubble animates again', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={tree()} activeId="vpn" openActiveLevel />);
+
+      await user.click(screen.getByRole('button', { name: 'Back to Settings' }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(screen.getByRole('button', { name: /Network/ })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Back' }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(backArea(container)).toBeNull();
+
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(backArea(container)).not.toHaveAttribute('data-dockbar-static');
+    });
+  });
+
   describe('toggle items (pressed)', () => {
     const TogglePanels = ({ onActiveSelect }: { onActiveSelect?: () => void }) => {
       const [open, setOpen] = useState<string[]>(['chat']);

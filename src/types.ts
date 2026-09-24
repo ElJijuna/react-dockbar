@@ -101,6 +101,12 @@ export interface DockBarProps {
   activeId?: string | null;
   /** Initial active id when uncontrolled; activating a leaf item then makes it active. */
   defaultActiveId?: string | null;
+  /**
+   * Start inside the submenu that contains the active item (`activeId`/`defaultActiveId`)
+   * instead of at the root. Applied on mount only: later `activeId` changes never move the
+   * user away from the level they are browsing. Default `false`.
+   */
+  openActiveLevel?: boolean;
   colorScheme?: DockBarColorScheme;
   variant?: DockBarVariant;
   size?: DockBarSize;

@@ -146,6 +146,16 @@ export const ReducedMotion: Story = {
   },
 };
 
+/** Starts inside Settings → Network because the active item (VPN) lives there. */
+export const OpenActiveLevel: Story = {
+  args: {
+    items: nestedItems,
+    defaultActiveId: 'vpn',
+    openActiveLevel: true,
+    ariaLabel: 'App dock',
+  },
+};
+
 const pillItems: DockBarEntry[] = [
   { id: 'search', label: 'Search', icon: <MdSearch />, onSelect: fn() },
   { id: 'home', label: 'Home', icon: <MdHome />, onSelect: fn() },
