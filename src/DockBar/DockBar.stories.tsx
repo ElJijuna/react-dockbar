@@ -90,23 +90,33 @@ export const NestedDock: Story = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
+    // Items ignore pointers while a level animates, so wait for it to settle before clicking.
+    const clickWhenSettled = async (name: string | RegExp) => {
+      await waitFor(() =>
+        expect(canvasElement.querySelector('[data-dockbar-part="level"]')).toHaveAttribute(
+          'data-dockbar-phase',
+          'idle',
+        ),
+      );
+      await userEvent.click(canvas.getByRole('button', { name }));
+    };
 
     await step('drill into Settings', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: /Settings/ }));
+      await clickWhenSettled(/Settings/);
       await waitFor(() => expect(canvas.getByRole('button', { name: /Back/ })).toBeInTheDocument());
     });
 
     await step('drill into Network', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: /Network/ }));
+      await clickWhenSettled(/Network/);
       await waitFor(() => expect(canvas.getByRole('button', { name: 'VPN' })).toBeInTheDocument());
     });
 
     await step('navigate back up two levels', async () => {
-      await userEvent.click(canvas.getByRole('button', { name: /Back/ }));
+      await clickWhenSettled(/Back/);
       await waitFor(() =>
-        expect(canvas.getByRole('button', { name: /Settings/ })).toBeInTheDocument(),
+        expect(canvas.getByRole('button', { name: /Network/ })).toBeInTheDocument(),
       );
-      await userEvent.click(canvas.getByRole('button', { name: /Back/ }));
+      await clickWhenSettled(/Back/);
       await waitFor(() =>
         expect(canvas.getByRole('button', { name: 'Finder' })).toBeInTheDocument(),
       );
