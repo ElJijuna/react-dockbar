@@ -129,7 +129,7 @@ export const DockBar = ({
       return undefined;
     }
     const grandparent = breadcrumb[breadcrumb.length - 2];
-    return grandparent ? `Back to ${grandparent.label}` : `Back to ${resolvedBackItem.label}`;
+    return grandparent ? `Back to ${grandparent.label}` : resolvedBackItem.label;
   }, [depth, breadcrumb, resolvedBackItem.label]);
 
   const rootClassName = [styles.dockbar, styles[`size-${size}`], className]
@@ -154,6 +154,7 @@ export const DockBar = ({
         items={levelItems}
         phase={phase}
         direction={direction}
+        orientation={orientation}
         animationDuration={animationDuration}
         magnification={magnification}
         backAriaLabel={backAriaLabel}

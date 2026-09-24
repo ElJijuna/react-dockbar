@@ -82,7 +82,7 @@ describe('DockBar', () => {
     endLevelTransition(container);
     endLevelTransition(container);
 
-    const backButton = screen.getByRole('button', { name: /Back/ });
+    const backButton = screen.getByRole('button', { name: 'Back' });
     expect(backButton).toBeInTheDocument();
 
     await user.click(backButton);
@@ -134,28 +134,92 @@ describe('DockBar', () => {
     expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-variant', 'glass');
   });
 
-  it('scales the hovered item (and tapers off for neighbors) only when magnification is enabled', () => {
-    const items = flatItems();
-    const { rerender } = render(
-      <DockBar items={items} magnification={{ scale: 1.5, radius: 1 }} />,
-    );
+  describe('magnification', () => {
+    // jsdom has no layout: place items 60px apart, 50px wide, so Mail's center is x=85.
+    const mockItemRects = (container: HTMLElement) => {
+      container.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]').forEach((el, i) => {
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+          x: i * 60,
+          y: 0,
+          left: i * 60,
+          top: 0,
+          width: 50,
+          height: 50,
+          right: i * 60 + 50,
+          bottom: 50,
+          toJSON: () => ({}),
+        });
+      });
+    };
+    const scaleOf = (name: string) =>
+      Number(screen.getByRole('button', { name }).style.getPropertyValue('--dockbar-item-scale'));
 
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Mail' }));
-    expect(
-      screen.getByRole('button', { name: 'Mail' }).style.getPropertyValue('--dockbar-item-scale'),
-    ).toBe('1.5');
-    expect(
-      screen.getByRole('button', { name: 'Finder' }).style.getPropertyValue('--dockbar-item-scale'),
-    ).not.toBe('1');
-    expect(
-      screen.getByRole('button', { name: 'Photos' }).style.getPropertyValue('--dockbar-item-scale'),
-    ).not.toBe('1');
+    it('scales items continuously by pointer distance and marks the closest one as hovered', () => {
+      const { container } = render(
+        <DockBar items={flatItems()} magnification={{ scale: 1.5, distance: 150 }} />,
+      );
+      mockItemRects(container);
 
-    rerender(<DockBar items={items} magnification={false} />);
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Mail' }));
-    expect(
-      screen.getByRole('button', { name: 'Mail' }).style.getPropertyValue('--dockbar-item-scale'),
-    ).toBe('1');
+      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+
+      expect(scaleOf('Mail')).toBe(1.5);
+      expect(scaleOf('Finder')).toBeGreaterThan(1);
+      expect(scaleOf('Finder')).toBeLessThan(1.5);
+      expect(scaleOf('Finder')).toBeCloseTo(scaleOf('Photos'));
+      expect(scaleOf('Trash')).toBeLessThan(scaleOf('Photos'));
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
+      expect(screen.getByRole('button', { name: 'Finder' })).not.toHaveAttribute(
+        'data-dockbar-hovered',
+      );
+    });
+
+    it('resets every item to its base size when the pointer leaves the dock', () => {
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+
+      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      expect(scaleOf('Mail')).toBeGreaterThan(1);
+
+      fireEvent.mouseLeave(getLevel(container));
+      expect(scaleOf('Mail')).toBe(1);
+      expect(scaleOf('Finder')).toBe(1);
+    });
+
+    it('magnifies around the focused item for keyboard users', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+
+      await user.tab();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
+    });
+
+    it('does not magnify an item that only received focus from a mouse click', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+      jest.spyOn(HTMLElement.prototype, 'matches').mockImplementation(function (
+        this: HTMLElement,
+        selector: string,
+      ) {
+        return selector === ':focus-visible'
+          ? false
+          : Element.prototype.matches.call(this, selector);
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Photos' }));
+      expect(scaleOf('Photos')).toBe(1);
+      jest.restoreAllMocks();
+    });
+
+    it('never magnifies when disabled', () => {
+      const { container } = render(<DockBar items={flatItems()} magnification={false} />);
+      mockItemRects(container);
+
+      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      expect(scaleOf('Mail')).toBe(1);
+    });
   });
 
   it('does not activate a disabled item', async () => {

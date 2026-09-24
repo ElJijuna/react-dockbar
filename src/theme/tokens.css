@@ -6,8 +6,6 @@
   --dockbar-padding: 10px;
   --dockbar-transition-duration: 260ms;
   --dockbar-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
-  --dockbar-magnify-scale: 1.4;
-  --dockbar-magnify-transition: 120ms;
 }
 
 [data-dockbar-color-scheme="light"],
@@ -19,7 +17,8 @@
   --dockbar-fg: #1c1c1e;
   --dockbar-fg-muted: rgba(28, 28, 30, 0.6);
   --dockbar-accent: #0a84ff;
-  --dockbar-item-bg-hover: rgba(0, 0, 0, 0.06);
+  --dockbar-tooltip-bg: rgba(255, 255, 255, 0.92);
+  --dockbar-tooltip-fg: #1c1c1e;
 }
 
 [data-dockbar-color-scheme="dark"] {
@@ -30,7 +29,8 @@
   --dockbar-fg: #f5f5f7;
   --dockbar-fg-muted: rgba(245, 245, 247, 0.6);
   --dockbar-accent: #409cff;
-  --dockbar-item-bg-hover: rgba(255, 255, 255, 0.1);
+  --dockbar-tooltip-bg: rgba(44, 44, 46, 0.92);
+  --dockbar-tooltip-fg: #f5f5f7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,7 +41,8 @@
     --dockbar-fg: #f5f5f7;
     --dockbar-fg-muted: rgba(245, 245, 247, 0.6);
     --dockbar-accent: #409cff;
-    --dockbar-item-bg-hover: rgba(255, 255, 255, 0.1);
+    --dockbar-tooltip-bg: rgba(44, 44, 46, 0.92);
+    --dockbar-tooltip-fg: #f5f5f7;
   }
 }
 

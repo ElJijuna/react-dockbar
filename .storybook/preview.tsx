@@ -27,7 +27,7 @@ const preview: Preview = {
     (Story, ctx): ReactElement => (
       <div
         style={{
-          padding: 48,
+          padding: '120px 48px 48px',
           background: ctx.globals.colorScheme === 'dark' ? '#111' : '#eee',
         }}
       >

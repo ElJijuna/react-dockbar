@@ -37,11 +37,11 @@ export type DockBarOrientation = 'horizontal' | 'vertical';
 export type DockBarReducedMotionMode = 'system' | 'always' | 'never';
 
 export interface DockBarMagnificationConfig {
-  /** Max scale applied to the directly hovered item. Default 1.4 */
+  /** Max scale reached by the item directly under the pointer. Default 1.6 */
   scale?: number;
-  /** How many neighbors on each side are affected. Default 2 */
-  radius?: number;
-  /** CSS transition duration for the scale, in ms. Default 120 */
+  /** Pointer distance in px at which items stop being magnified. Default 140 */
+  distance?: number;
+  /** Size transition duration in ms, smoothing pointer movement. Default 90 */
   transitionMs?: number;
 }
 

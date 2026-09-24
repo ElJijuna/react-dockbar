@@ -7,8 +7,10 @@ export interface DockBarItemButtonProps {
   isBack: boolean;
   ariaLabel?: string;
   scale: number;
+  hovered: boolean;
   magnifyTransitionMs: number;
-  onHover: (hovered: boolean) => void;
+  onFocusItem: (element: HTMLElement) => void;
+  onBlurItem: () => void;
   onActivate: (
     item: DockBarItem,
     event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
@@ -21,13 +23,15 @@ export const DockBarItemButton = ({
   isBack,
   ariaLabel,
   scale,
+  hovered,
   magnifyTransitionMs,
-  onHover,
+  onFocusItem,
+  onBlurItem,
   onActivate,
   itemClassName,
 }: DockBarItemButtonProps): ReactElement => {
   const isParent = !isBack && Boolean(item.children?.length);
-  const state: DockBarItemState = { hovered: scale > 1, isBack };
+  const state: DockBarItemState = { hovered, isBack };
   const resolvedAriaLabel =
     ariaLabel ??
     item['aria-label'] ??
@@ -40,8 +44,16 @@ export const DockBarItemButton = ({
 
   const style = {
     '--dockbar-item-scale': scale,
-    transitionDuration: `${magnifyTransitionMs}ms`,
+    '--dockbar-magnify-transition': `${magnifyTransitionMs}ms`,
   } as CSSProperties;
+
+  // Only keyboard focus magnifies; programmatic focus after navigation or a mouse click
+  // must not magnify an item the pointer isn't over.
+  const handleFocus = (event: FocusEvent<HTMLElement>) => {
+    if (event.currentTarget.matches(':focus-visible')) {
+      onFocusItem(event.currentTarget);
+    }
+  };
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     if (item.disabled) {
@@ -50,14 +62,19 @@ export const DockBarItemButton = ({
     onActivate(item, event);
   };
 
-  const handleFocus = (_event: FocusEvent<HTMLElement>) => onHover(true);
-  const handleBlur = (_event: FocusEvent<HTMLElement>) => onHover(false);
-
   const content = (
     <>
-      <span className={styles.icon}>{item.icon}</span>
-      <span className={styles.label}>{item.label}</span>
-      {item.badge ? <span className={styles.badge}>{item.badge}</span> : null}
+      <span className={styles.icon} aria-hidden="true">
+        {item.icon}
+      </span>
+      <span className={styles.label} aria-hidden="true">
+        {item.label}
+      </span>
+      {item.badge ? (
+        <span className={styles.badge} aria-hidden="true">
+          {item.badge}
+        </span>
+      ) : null}
     </>
   );
 
@@ -66,11 +83,10 @@ export const DockBarItemButton = ({
     style,
     'data-dockbar-part': 'item' as const,
     'data-dockbar-item-id': item.id,
+    'data-dockbar-hovered': hovered || undefined,
     'aria-label': resolvedAriaLabel,
-    onMouseEnter: () => onHover(true),
-    onMouseLeave: () => onHover(false),
     onFocus: handleFocus,
-    onBlur: handleBlur,
+    onBlur: onBlurItem,
     onClick: handleClick,
   };
 

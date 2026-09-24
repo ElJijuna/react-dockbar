@@ -3,11 +3,11 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import type { DockBarItem } from '../types';
 import { DockBar } from './DockBar';
 
-const icon = (glyph: string) => <span style={{ fontSize: 22 }}>{glyph}</span>;
+const icon = (glyph: string) => <span>{glyph}</span>;
 
 const flatItems: DockBarItem[] = [
   { id: 'finder', label: 'Finder', icon: icon('🗂️'), onSelect: fn() },
-  { id: 'mail', label: 'Mail', icon: icon('✉️'), onSelect: fn() },
+  { id: 'mail', label: 'Mail', icon: icon('✉️'), badge: 3, onSelect: fn() },
   { id: 'photos', label: 'Photos', icon: icon('🖼️'), onSelect: fn() },
   { id: 'music', label: 'Music', icon: icon('🎵'), onSelect: fn() },
   { id: 'terminal', label: 'Terminal', icon: icon('⌨️'), onSelect: fn() },

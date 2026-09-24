@@ -3,6 +3,9 @@
   display: flex;
   flex-direction: row;
   align-items: flex-end;
+  justify-content: center;
+  box-sizing: content-box;
+  height: var(--dockbar-item-size);
   gap: var(--dockbar-gap);
   padding: var(--dockbar-padding);
   border-radius: var(--dockbar-radius);
@@ -17,7 +20,9 @@
 
 [data-dockbar-orientation="vertical"] .level {
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-start;
+  height: auto;
+  width: var(--dockbar-item-size);
 }
 
 .level[data-dockbar-phase="collapsing"] {

@@ -5,9 +5,9 @@ export const DOCKBAR_BACK_ID = '__dockbar-back__';
 export const DEFAULT_ANIMATION_DURATION_MS = 260;
 
 export const DEFAULT_MAGNIFICATION: Required<DockBarMagnificationConfig> = {
-  scale: 1.4,
-  radius: 2,
-  transitionMs: 120,
+  scale: 1.6,
+  distance: 140,
+  transitionMs: 90,
 };
 
 export const DEFAULT_ARIA_LABEL = 'App dock';

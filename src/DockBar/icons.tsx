@@ -4,8 +4,8 @@ export const ChevronLeftIcon = (): ReactElement => {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="60%"
-      height="60%"
+      width="100%"
+      height="100%"
       fill="none"
       stroke="currentColor"
       strokeWidth={2.5}
