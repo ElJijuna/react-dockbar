@@ -1,5 +1,5 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactElement } from 'react';
-import { useCallback, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { DockBarAnimationPhase, DockBarNavDirection } from '../hooks/useDockBarNavigation';
 import { useMagnify } from '../hooks/useMagnify';
 import type {
@@ -53,35 +53,18 @@ export const DockBarLevel = ({
 }: DockBarLevelProps): ReactElement => {
   const activeId = activePathIds[activePathIds.length - 1];
   const levelRef = useRef<HTMLDivElement>(null);
-  const { hoveredIndex, getScale, update, reset, transitionMs } = useMagnify(
-    magnification,
-    orientation,
-  );
+  const magnify = useMagnify(magnification, orientation, levelRef);
+  const { invalidate } = magnify;
 
-  const getItemElements = useCallback(
-    () =>
-      Array.from(
-        levelRef.current?.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]') ?? [],
-      ),
-    [],
-  );
-
-  const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
-    update(orientation === 'vertical' ? event.clientY : event.clientX, getItemElements());
-  };
-
-  const handleItemFocus = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const center =
-      orientation === 'vertical' ? rect.top + rect.height / 2 : rect.left + rect.width / 2;
-    update(center, getItemElements());
-  };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `items` is the trigger — adding, removing or reordering items in place moves them, so cached positions must be dropped.
+  useEffect(() => {
+    invalidate();
+  }, [items, invalidate]);
 
   const style = { '--dockbar-transition-duration': `${animationDuration}ms` } as CSSProperties;
   let itemIndex = -1;
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: pointer tracking for magnification only; items are native buttons
     <div
       ref={levelRef}
       className={styles.level}
@@ -90,8 +73,9 @@ export const DockBarLevel = ({
       data-dockbar-direction={direction ?? undefined}
       style={style}
       onAnimationEnd={onAnimationEnd}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={reset}
+      onPointerEnter={magnify.handlePointerEnter}
+      onPointerMove={magnify.handlePointerMove}
+      onPointerLeave={magnify.handlePointerLeave}
     >
       {items.map((entry) => {
         if (isSeparator(entry)) {
@@ -115,13 +99,12 @@ export const DockBarLevel = ({
             isBack={false}
             tabIndex={item.id === tabStopId ? 0 : -1}
             parentItemLabel={parentItemLabel}
-            scale={getScale(index)}
-            hovered={hoveredIndex === index}
+            hovered={magnify.hoveredIndex === index}
             active={item.id === activeId}
             containsActive={item.id !== activeId && activePathIds.includes(item.id)}
-            magnifyTransitionMs={transitionMs}
-            onFocusItem={handleItemFocus}
-            onBlurItem={reset}
+            magnifyTransitionMs={magnify.transitionMs}
+            onFocusItem={magnify.focusItem}
+            onBlurItem={magnify.blurItem}
             onActivate={onActivate}
             itemClassName={itemClassName}
           />

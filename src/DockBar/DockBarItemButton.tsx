@@ -12,7 +12,6 @@ export interface DockBarItemButtonProps {
   ariaLabel?: string;
   /** Builds the accessible name of items that open a submenu. */
   parentItemLabel?: Required<DockBarLabels>['parentItem'];
-  scale: number;
   hovered: boolean;
   active: boolean;
   containsActive: boolean;
@@ -32,7 +31,6 @@ export const DockBarItemButton = ({
   tabIndex,
   ariaLabel,
   parentItemLabel = DEFAULT_LABELS.parentItem,
-  scale,
   hovered,
   active,
   containsActive,
@@ -56,7 +54,6 @@ export const DockBarItemButton = ({
     .join(' ');
 
   const style = {
-    '--dockbar-item-scale': scale,
     '--dockbar-magnify-transition': `${magnifyTransitionMs}ms`,
   } as CSSProperties;
 

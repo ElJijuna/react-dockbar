@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { endLevelTransition } from '../test-utils/fireLevelTransition';
@@ -363,16 +363,27 @@ describe('DockBar', () => {
         });
       });
     };
+    // Scale is written straight to the DOM; an unset property means the CSS default of 1.
     const scaleOf = (name: string) =>
-      Number(screen.getByRole('button', { name }).style.getPropertyValue('--dockbar-item-scale'));
+      Number(
+        screen.getByRole('button', { name }).style.getPropertyValue('--dockbar-item-scale') || 1,
+      );
+    // Pointer moves are applied on the next animation frame.
+    const nextFrame = () =>
+      act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    const pointerAt = async (container: HTMLElement, clientX: number, pointerType = 'mouse') => {
+      fireEvent.pointerEnter(getLevel(container), { clientX, pointerType });
+      fireEvent.pointerMove(getLevel(container), { clientX, pointerType });
+      await nextFrame();
+    };
 
-    it('scales items continuously by pointer distance and marks the closest one as hovered', () => {
+    it('scales items continuously by pointer distance and marks the closest one as hovered', async () => {
       const { container } = render(
         <DockBar items={flatItems()} magnification={{ scale: 1.5, distance: 150 }} />,
       );
       mockItemRects(container);
 
-      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      await pointerAt(container, 85);
 
       expect(scaleOf('Mail')).toBe(1.5);
       expect(scaleOf('Finder')).toBeGreaterThan(1);
@@ -385,16 +396,108 @@ describe('DockBar', () => {
       );
     });
 
-    it('resets every item to its base size when the pointer leaves the dock', () => {
+    it('resets every item to its base size when the pointer leaves the dock', async () => {
       const { container } = render(<DockBar items={flatItems()} />);
       mockItemRects(container);
 
-      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      await pointerAt(container, 85);
       expect(scaleOf('Mail')).toBeGreaterThan(1);
 
-      fireEvent.mouseLeave(getLevel(container));
+      fireEvent.pointerLeave(getLevel(container));
       expect(scaleOf('Mail')).toBe(1);
       expect(scaleOf('Finder')).toBe(1);
+    });
+
+    it('measures from the unmagnified layout, so magnified sizes do not feed back', async () => {
+      const { container } = render(
+        <DockBar items={flatItems()} magnification={{ scale: 1.5, distance: 150 }} />,
+      );
+      mockItemRects(container);
+      await pointerAt(container, 85);
+      const before = ['Finder', 'Mail', 'Photos', 'Trash'].map(scaleOf);
+
+      // Simulate the magnified layout: every rect has shifted by 20px.
+      container.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]').forEach((el, i) => {
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+          x: i * 60 + 20,
+          y: 0,
+          left: i * 60 + 20,
+          top: 0,
+          width: 50,
+          height: 50,
+          right: i * 60 + 70,
+          bottom: 50,
+          toJSON: () => ({}),
+        });
+      });
+      fireEvent.pointerMove(getLevel(container), { clientX: 85, pointerType: 'mouse' });
+      await nextFrame();
+
+      expect(['Finder', 'Mail', 'Photos', 'Trash'].map(scaleOf)).toEqual(before);
+    });
+
+    it('coalesces pointer moves into a single update per animation frame', async () => {
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+      const rafSpy = jest.spyOn(window, 'requestAnimationFrame');
+
+      fireEvent.pointerEnter(getLevel(container), { clientX: 0, pointerType: 'mouse' });
+      for (const clientX of [10, 30, 50, 70, 85]) {
+        fireEvent.pointerMove(getLevel(container), { clientX, pointerType: 'mouse' });
+      }
+      expect(rafSpy).toHaveBeenCalledTimes(1);
+      rafSpy.mockRestore();
+
+      await nextFrame();
+      // The single update uses the latest pointer position.
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
+    });
+
+    it('ignores touch pointers so a tap never leaves an item magnified', async () => {
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+
+      await pointerAt(container, 85, 'touch');
+      expect(scaleOf('Mail')).toBe(1);
+    });
+
+    it('keeps pointer magnification when keyboard focus leaves an item', async () => {
+      const { container } = render(<DockBar items={flatItems()} />);
+      mockItemRects(container);
+      await pointerAt(container, 85);
+
+      fireEvent.blur(screen.getByRole('button', { name: 'Mail' }));
+      expect(scaleOf('Mail')).toBeGreaterThan(1);
+    });
+
+    it('re-measures after the page scrolls', async () => {
+      const { container } = render(
+        <DockBar items={flatItems()} magnification={{ scale: 1.5, distance: 150 }} />,
+      );
+      mockItemRects(container);
+      await pointerAt(container, 85);
+      fireEvent.pointerLeave(getLevel(container));
+
+      // Page scrolled 60px to the left: Photos now sits where Mail was.
+      container.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]').forEach((el, i) => {
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+          x: i * 60 - 60,
+          y: 0,
+          left: i * 60 - 60,
+          top: 0,
+          width: 50,
+          height: 50,
+          right: i * 60 - 10,
+          bottom: 50,
+          toJSON: () => ({}),
+        });
+      });
+      fireEvent.scroll(window);
+      await pointerAt(container, 85);
+
+      expect(screen.getByRole('button', { name: 'Photos' })).toHaveAttribute(
+        'data-dockbar-hovered',
+      );
     });
 
     it('magnifies around the focused item for keyboard users', async () => {
@@ -425,11 +528,11 @@ describe('DockBar', () => {
       jest.restoreAllMocks();
     });
 
-    it('never magnifies when disabled', () => {
+    it('never magnifies when disabled', async () => {
       const { container } = render(<DockBar items={flatItems()} magnification={false} />);
       mockItemRects(container);
 
-      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      await pointerAt(container, 85);
       expect(scaleOf('Mail')).toBe(1);
     });
   });
@@ -690,7 +793,7 @@ describe('DockBar', () => {
       expect(screen.getByRole('button', { name: 'Mail' })).toHaveFocus();
     });
 
-    it('keeps magnification aligned to items, skipping separators', () => {
+    it('keeps magnification aligned to items, skipping separators', async () => {
       const { container } = render(
         <DockBar items={groupedItems()} magnification={{ scale: 1.5, distance: 150 }} />,
       );
@@ -709,7 +812,8 @@ describe('DockBar', () => {
       });
 
       // Mail is the 2nd item element (index 1), centered at x=85.
-      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      fireEvent.pointerMove(getLevel(container), { clientX: 85, pointerType: 'mouse' });
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
       expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
     });
   });

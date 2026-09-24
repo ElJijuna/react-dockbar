@@ -46,7 +46,6 @@ export const DockBarBackButton = ({
         isBack
         tabIndex={tabIndex}
         ariaLabel={ariaLabel}
-        scale={1}
         hovered={hovered}
         active={false}
         containsActive={false}
