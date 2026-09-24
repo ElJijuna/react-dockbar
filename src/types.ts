@@ -14,6 +14,12 @@ export interface DockBarItem {
   target?: AnchorHTMLAttributes<HTMLAnchorElement>['target'];
   disabled?: boolean;
   badge?: ReactNode;
+  /**
+   * Makes a leaf button a toggle (`aria-pressed`), e.g. for panels that can be open at the same
+   * time. Controlled: flip it yourself in `onSelect`. Toggling never changes the active item.
+   * Ignored on items with `children` or `href`.
+   */
+  pressed?: boolean;
   'aria-label'?: string;
 }
 
@@ -82,6 +88,8 @@ export interface DockBarItemState {
   active: boolean;
   /** The active item is nested somewhere inside this item's children. */
   containsActive: boolean;
+  /** This item is a toggle that is currently on. */
+  pressed: boolean;
 }
 
 export interface DockBarProps {

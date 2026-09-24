@@ -2,6 +2,7 @@ import type { CSSProperties, FocusEvent, KeyboardEvent, MouseEvent, ReactElement
 import { DEFAULT_LABELS } from '../constants';
 import type { DockBarItem, DockBarItemState, DockBarLabels, DockBarProps } from '../types';
 import { isSeparator } from '../utils/isSeparator';
+import { isToggleItem } from '../utils/isToggleItem';
 import styles from './DockBarItemButton.module.css';
 
 export interface DockBarItemButtonProps {
@@ -41,7 +42,9 @@ export const DockBarItemButton = ({
   itemClassName,
 }: DockBarItemButtonProps): ReactElement => {
   const isParent = !isBack && Boolean(item.children?.length);
-  const state: DockBarItemState = { hovered, isBack, active, containsActive };
+  const isToggle = !isBack && isToggleItem(item);
+  const pressed = isToggle && item.pressed === true;
+  const state: DockBarItemState = { hovered, isBack, active, containsActive, pressed };
   const childCount = item.children?.filter((entry) => !isSeparator(entry)).length ?? 0;
   const resolvedAriaLabel =
     ariaLabel ??
@@ -96,6 +99,7 @@ export const DockBarItemButton = ({
     'data-dockbar-hovered': hovered || undefined,
     'data-dockbar-active': active ? 'self' : containsActive ? 'ancestor' : undefined,
     'aria-current': active ? (item.href ? ('page' as const) : true) : undefined,
+    'data-dockbar-pressed': pressed || undefined,
     'aria-label': resolvedAriaLabel,
     onFocus: handleFocus,
     onBlur: onBlurItem,
@@ -118,7 +122,13 @@ export const DockBarItemButton = ({
   }
 
   return (
-    <button {...sharedProps} type="button" disabled={item.disabled} tabIndex={tabIndex}>
+    <button
+      {...sharedProps}
+      type="button"
+      disabled={item.disabled}
+      tabIndex={tabIndex}
+      aria-pressed={isToggle ? pressed : undefined}
+    >
       {content}
     </button>
   );

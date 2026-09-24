@@ -121,6 +121,10 @@
   pointer-events: none;
 }
 
+.item[data-dockbar-pressed] {
+  background: var(--dockbar-pressed-bg, color-mix(in srgb, var(--dockbar-accent) 22%, transparent));
+}
+
 .item[data-dockbar-active]::after {
   content: "";
   position: absolute;
@@ -154,7 +158,9 @@
 }
 
 [data-dockbar-variant="pill"] .item[data-dockbar-active="self"],
-[data-dockbar-variant="pill"] .item[data-dockbar-active="self"]:hover {
+[data-dockbar-variant="pill"] .item[data-dockbar-active="self"]:hover,
+[data-dockbar-variant="pill"] .item[data-dockbar-pressed],
+[data-dockbar-variant="pill"] .item[data-dockbar-pressed]:hover {
   background: var(--dockbar-active-bg);
   color: var(--dockbar-active-fg);
 }

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
 import {
   MdBugReport,
   MdCallSplit,
@@ -20,7 +21,7 @@ import {
   MdVpnKey,
 } from 'react-icons/md';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import type { DockBarEntry, DockBarItem } from '../types';
+import type { DockBarEntry, DockBarItem, DockBarProps } from '../types';
 import { DockBar } from './DockBar';
 
 const icon = (glyph: string) => <span>{glyph}</span>;
@@ -176,7 +177,22 @@ const pillItems: DockBarEntry[] = [
   { id: 'messages', label: 'Messages', icon: <MdMessage />, onSelect: fn() },
 ];
 
-/** Compact toolbar theme: white pill, grouped icons with separators, filled active item. */
+const PANEL_IDS = new Set(['comments', 'forum', 'messages']);
+
+/** Pill toolbar whose chat panels are toggles: several can be on next to the active item. */
+const PillToolbarWithPanels = (args: DockBarProps) => {
+  const [openPanels, setOpenPanels] = useState<string[]>(['forum', 'messages']);
+  const togglePanel = (id: string) =>
+    setOpenPanels((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  const items = args.items.map((entry) =>
+    entry.type !== 'separator' && PANEL_IDS.has(entry.id)
+      ? { ...entry, pressed: openPanels.includes(entry.id), onSelect: () => togglePanel(entry.id) }
+      : entry,
+  );
+  return <DockBar {...args} items={items} />;
+};
+
+/** Compact toolbar theme: white pill, grouped icons with separators, filled active and pressed items. */
 export const PillToolbar: Story = {
   args: {
     items: pillItems,
@@ -184,6 +200,7 @@ export const PillToolbar: Story = {
     defaultActiveId: 'image-search',
     ariaLabel: 'Toolbar',
   },
+  render: (args) => <PillToolbarWithPanels {...args} />,
 };
 
 /** Screen-reader texts translated to Spanish via `ariaLabel`, `backItem.label` and `labels`. */

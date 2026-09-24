@@ -21,6 +21,7 @@ import { useRovingFocus } from '../hooks/useRovingFocus';
 import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
 import { isSeparator } from '../utils/isSeparator';
+import { isToggleItem } from '../utils/isToggleItem';
 import styles from './DockBar.module.css';
 import { DockBarBackButton } from './DockBarBackButton';
 import { DockBarLevel } from './DockBarLevel';
@@ -124,7 +125,7 @@ export const DockBar = ({
         navigateTo(item);
         return;
       }
-      if (!isActiveControlled) {
+      if (!isActiveControlled && !isToggleItem(item)) {
         setUncontrolledActiveId(item.id);
       }
       item.onSelect?.({ item, path: breadcrumb, nativeEvent: event.nativeEvent });

@@ -51,6 +51,9 @@ function AppMenuBar() {
   `glass`/`solid`, subtle for `pill`); pass `magnification={{ scale, distance }}` to override
   any part of it, or `false` to disable.
 - **Separators**: add `{ type: 'separator', id: 'sep-1' }` entries to split items into groups.
+- **Toggle items**: give a leaf item `pressed: boolean` to make it a toggle button
+  (`aria-pressed`) — e.g. panels that can be open at the same time. It is controlled: flip it in
+  `onSelect`. Toggling never changes the active item, so both can be shown together.
 - **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid' | 'pill'`)
   props switch themes (`pill` is a compact rounded toolbar with a filled active item); deeper customization is available through CSS custom properties
   (`--dockbar-bg`, `--dockbar-blur`, `--dockbar-accent`, `--dockbar-item-size`, ...) documented

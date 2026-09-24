@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { endLevelTransition } from '../test-utils/fireLevelTransition';
 import type { DockBarEntry, DockBarItem } from '../types';
 import { DockBar } from './DockBar';
@@ -649,6 +649,98 @@ describe('DockBar', () => {
       expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
       expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('toggle items (pressed)', () => {
+    const TogglePanels = ({ onActiveSelect }: { onActiveSelect?: () => void }) => {
+      const [open, setOpen] = useState<string[]>(['chat']);
+      const toggle = (id: string) =>
+        setOpen((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+      const panel = (id: string, label: string): DockBarItem => ({
+        id,
+        label,
+        icon: <span>{label[0]}</span>,
+        pressed: open.includes(id),
+        onSelect: () => toggle(id),
+      });
+      return (
+        <DockBar
+          defaultActiveId="home"
+          items={[
+            { id: 'home', label: 'Home', icon: <span>H</span>, onSelect: onActiveSelect },
+            panel('chat', 'Chat'),
+            panel('forum', 'Forum'),
+          ]}
+        />
+      );
+    };
+
+    it('exposes aria-pressed only on toggle items', () => {
+      render(<TogglePanels />);
+      expect(screen.getByRole('button', { name: 'Chat' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Forum' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+      expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-pressed');
+    });
+
+    it('lets several toggles be on at once without changing the active item', async () => {
+      const user = userEvent.setup();
+      render(<TogglePanels />);
+
+      await user.click(screen.getByRole('button', { name: 'Forum' }));
+
+      expect(screen.getByRole('button', { name: 'Chat' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Forum' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Forum' })).toHaveAttribute('data-dockbar-pressed');
+      expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'true');
+      expect(screen.getByRole('button', { name: 'Forum' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('toggles off again and works from the keyboard', async () => {
+      const user = userEvent.setup();
+      render(<TogglePanels />);
+      await user.tab();
+      await user.keyboard('{ArrowRight}{Enter}');
+
+      expect(screen.getByRole('button', { name: 'Chat' })).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'Chat' })).not.toHaveAttribute(
+        'data-dockbar-pressed',
+      );
+    });
+
+    it('ignores pressed on parents and links', () => {
+      render(
+        <DockBar
+          items={[
+            {
+              id: 'settings',
+              label: 'Settings',
+              icon: <span>S</span>,
+              pressed: true,
+              children: [{ id: 'wifi', label: 'Wi-Fi', icon: <span>W</span> }],
+            },
+            { id: 'docs', label: 'Docs', icon: <span>D</span>, href: '/docs', pressed: true },
+          ]}
+        />,
+      );
+      expect(screen.getByRole('button', { name: /Settings/ })).not.toHaveAttribute('aria-pressed');
+      expect(screen.getByRole('link', { name: 'Docs' })).not.toHaveAttribute('aria-pressed');
+      expect(screen.getByRole('link', { name: 'Docs' })).not.toHaveAttribute(
+        'data-dockbar-pressed',
+      );
+    });
+
+    it('exposes the pressed state to itemClassName', () => {
+      render(
+        <DockBar
+          items={[{ id: 'chat', label: 'Chat', icon: <span>C</span>, pressed: true }]}
+          itemClassName={(_item, state) => (state.pressed ? 'is-on' : undefined)}
+        />,
+      );
+      expect(screen.getByRole('button', { name: 'Chat' })).toHaveClass('is-on');
     });
   });
 
