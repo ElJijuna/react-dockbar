@@ -9,6 +9,7 @@ import type {
   DockBarMagnificationConfig,
   DockBarOrientation,
   DockBarProps,
+  DockBarVariant,
 } from '../types';
 import { isSeparator } from '../utils/isSeparator';
 import { DockBarItemButton } from './DockBarItemButton';
@@ -21,6 +22,7 @@ export interface DockBarLevelProps {
   orientation: DockBarOrientation;
   animationDuration: number;
   magnification: boolean | DockBarMagnificationConfig | undefined;
+  variant: DockBarVariant;
   /** Root-first ids of the active item and its ancestors. */
   activePathIds: string[];
   /** Id of the single item reachable with Tab (roving tabindex). */
@@ -44,6 +46,7 @@ export const DockBarLevel = ({
   orientation,
   animationDuration,
   magnification,
+  variant,
   activePathIds,
   tabStopId,
   parentItemLabel,
@@ -53,7 +56,7 @@ export const DockBarLevel = ({
 }: DockBarLevelProps): ReactElement => {
   const activeId = activePathIds[activePathIds.length - 1];
   const levelRef = useRef<HTMLDivElement>(null);
-  const magnify = useMagnify(magnification, orientation, levelRef);
+  const magnify = useMagnify(magnification, variant, orientation, levelRef);
   const { invalidate } = magnify;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `items` is the trigger — adding, removing or reordering items in place moves them, so cached positions must be dropped.

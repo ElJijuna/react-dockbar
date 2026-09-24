@@ -47,7 +47,9 @@ function AppMenuBar() {
   (uncontrolled; activating a leaf makes it active). The active item gets a dot indicator and
   `aria-current`; parents containing a nested active item get a dimmer dot.
 - **Hover magnification**: items scale up under the pointer, tapering off for nearby
-  neighbors, matching macOS Dock behavior. Tune or disable via the `magnification` prop.
+  neighbors, matching macOS Dock behavior. Defaults depend on the variant (pronounced for
+  `glass`/`solid`, subtle for `pill`); pass `magnification={{ scale, distance }}` to override
+  any part of it, or `false` to disable.
 - **Separators**: add `{ type: 'separator', id: 'sep-1' }` entries to split items into groups.
 - **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid' | 'pill'`)
   props switch themes (`pill` is a compact rounded toolbar with a filled active item); deeper customization is available through CSS custom properties

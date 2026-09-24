@@ -182,7 +182,6 @@ export const PillToolbar: Story = {
     items: pillItems,
     variant: 'pill',
     defaultActiveId: 'image-search',
-    magnification: { scale: 1.25, distance: 90 },
     ariaLabel: 'Toolbar',
   },
 };
@@ -192,7 +191,6 @@ export const SpanishLabels: Story = {
   args: {
     items: pillItems,
     variant: 'pill',
-    magnification: { scale: 1.25, distance: 90 },
     ariaLabel: 'Barra de herramientas',
     backItem: { label: 'Atrás' },
     labels: {

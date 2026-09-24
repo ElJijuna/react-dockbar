@@ -97,7 +97,11 @@ export interface DockBarProps {
   variant?: DockBarVariant;
   size?: DockBarSize;
   orientation?: DockBarOrientation;
-  /** true = default magnification config, false = disabled, object = tuned config. Default true. */
+  /**
+   * `true` = the variant's default, `false` = disabled, object = overrides merged onto the
+   * variant's default. Defaults: glass/solid `{ scale: 1.6, distance: 140 }`, pill
+   * `{ scale: 1.25, distance: 90 }`. Default `true`.
+   */
   magnification?: boolean | DockBarMagnificationConfig;
   /** Duration in ms of the collapse/expand level transition. Default 260. */
   animationDuration?: number;

@@ -535,6 +535,42 @@ describe('DockBar', () => {
       await pointerAt(container, 85);
       expect(scaleOf('Mail')).toBe(1);
     });
+
+    describe('variant defaults', () => {
+      it('uses the pronounced dock magnification for glass and solid', async () => {
+        const { container, unmount } = render(<DockBar items={flatItems()} />);
+        mockItemRects(container);
+        await pointerAt(container, 85);
+        expect(scaleOf('Mail')).toBe(1.6);
+        unmount();
+
+        const solid = render(<DockBar items={flatItems()} variant="solid" />);
+        mockItemRects(solid.container);
+        await pointerAt(solid.container, 85);
+        expect(scaleOf('Mail')).toBe(1.6);
+      });
+
+      it('uses a subtler magnification for the pill toolbar', async () => {
+        const { container } = render(<DockBar items={flatItems()} variant="pill" />);
+        mockItemRects(container);
+        await pointerAt(container, 85);
+
+        expect(scaleOf('Mail')).toBe(1.25);
+        // Pill's shorter reach (90px) leaves items two slots away (120px) untouched.
+        expect(scaleOf('Trash')).toBe(1);
+      });
+
+      it('merges a partial config onto the variant defaults', async () => {
+        const { container } = render(
+          <DockBar items={flatItems()} variant="pill" magnification={{ distance: 300 }} />,
+        );
+        mockItemRects(container);
+        await pointerAt(container, 85);
+
+        expect(scaleOf('Mail')).toBe(1.25);
+        expect(scaleOf('Trash')).toBeGreaterThan(1);
+      });
+    });
   });
 
   it('does not activate a disabled item', async () => {

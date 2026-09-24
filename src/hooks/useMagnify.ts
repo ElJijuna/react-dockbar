@@ -1,7 +1,7 @@
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_MAGNIFICATION } from '../constants';
-import type { DockBarMagnificationConfig, DockBarOrientation } from '../types';
+import { DEFAULT_MAGNIFICATION_BY_VARIANT } from '../constants';
+import type { DockBarMagnificationConfig, DockBarOrientation, DockBarVariant } from '../types';
 
 const ITEM_SELECTOR = '[data-dockbar-part="item"]';
 const SCALE_PROPERTY = '--dockbar-item-scale';
@@ -37,6 +37,7 @@ export function scaleAtDistance(distance: number, maxScale: number, range: numbe
  */
 export function useMagnify(
   config: boolean | DockBarMagnificationConfig | undefined,
+  variant: DockBarVariant,
   orientation: DockBarOrientation,
   levelRef: RefObject<HTMLElement | null>,
 ): UseMagnifyResult {
@@ -49,15 +50,18 @@ export function useMagnify(
   /** When items last started shrinking back to 1; until they finish, rects are still magnified. */
   const settledAtRef = useRef(0);
 
-  const resolved = useMemo(() => {
-    if (config === false) {
-      return null;
-    }
-    if (config === true || config === undefined) {
-      return DEFAULT_MAGNIFICATION;
-    }
-    return { ...DEFAULT_MAGNIFICATION, ...config };
-  }, [config]);
+  // Resolve against the variant's defaults, memoized on primitives so an inline config object
+  // (a new identity every render) does not recreate every handler.
+  const defaults = DEFAULT_MAGNIFICATION_BY_VARIANT[variant];
+  const custom = typeof config === 'object' ? config : undefined;
+  const enabled = config !== false;
+  const scale = custom?.scale ?? defaults.scale;
+  const distance = custom?.distance ?? defaults.distance;
+  const transitionMs = custom?.transitionMs ?? defaults.transitionMs;
+  const resolved = useMemo(
+    () => (enabled ? { scale, distance, transitionMs } : null),
+    [enabled, scale, distance, transitionMs],
+  );
 
   const getItems = useCallback(
     () => Array.from(levelRef.current?.querySelectorAll<HTMLElement>(ITEM_SELECTOR) ?? []),
@@ -77,8 +81,6 @@ export function useMagnify(
     return centersRef.current;
   }, [getItems, centerOf]);
 
-  const transitionMs = resolved?.transitionMs ?? DEFAULT_MAGNIFICATION.transitionMs;
-
   /** Cached centers, re-measured only when items are at rest (unmagnified). */
   const baseCenters = useCallback(() => {
     const atRest = performance.now() >= settledAtRef.current;
@@ -96,14 +98,14 @@ export function useMagnify(
       let closestScale = 1;
       items.forEach((element, index) => {
         const center = centers?.[index];
-        const scale =
+        const itemScale =
           resolved && pointer !== null && center !== undefined
             ? scaleAtDistance(Math.abs(pointer - center), resolved.scale, resolved.distance)
             : 1;
-        element.style.setProperty(SCALE_PROPERTY, String(scale));
-        if (scale > closestScale) {
+        element.style.setProperty(SCALE_PROPERTY, String(itemScale));
+        if (itemScale > closestScale) {
           closest = index;
-          closestScale = scale;
+          closestScale = itemScale;
         }
       });
       if (magnifiedRef.current && closest === null) {

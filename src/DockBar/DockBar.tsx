@@ -209,6 +209,7 @@ export const DockBar = ({
         orientation={orientation}
         animationDuration={animationDuration}
         magnification={magnification}
+        variant={variant}
         activePathIds={activePathIds}
         tabStopId={roving.tabStopId}
         parentItemLabel={resolvedLabels.parentItem}
