@@ -142,4 +142,21 @@ describe('useDockBarNavigation', () => {
       jest.useRealTimers();
     }
   });
+
+  it('keeps its depth and derives the level from new items with the same ids', () => {
+    const { result, rerender } = renderHook(
+      ({ items }: { items: DockBarItem[] }) => useDockBarNavigation(items, { instant: true }),
+      { initialProps: { items: rootItems } },
+    );
+    act(() => result.current.navigateTo(rootItems[1]));
+    expect(result.current.depth).toBe(1);
+
+    const renamedChildren: DockBarItem[] = [{ id: 'wifi', label: 'Wi-Fi 7', icon: null }];
+    const nextItems: DockBarItem[] = [rootItems[0], { ...rootItems[1], children: renamedChildren }];
+    rerender({ items: nextItems });
+
+    expect(result.current.depth).toBe(1);
+    expect(result.current.levelItems).toBe(renamedChildren);
+    expect(result.current.breadcrumb).toEqual([nextItems[1]]);
+  });
 });

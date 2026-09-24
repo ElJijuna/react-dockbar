@@ -1,103 +1,92 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { DEFAULT_ANIMATION_DURATION_MS, DOCKBAR_BACK_ID } from '../constants';
 import type { DockBarEntry, DockBarItem, DockBarNavigateEvent } from '../types';
+import { resolvePath } from '../utils/resolvePath';
 
 export type DockBarAnimationPhase = 'idle' | 'collapsing' | 'expanding';
 export type DockBarNavDirection = 'forward' | 'back' | null;
 
+interface CompletedNavigation {
+  direction: 'forward' | 'back';
+  pathIds: string[];
+  itemId: string;
+}
+
+// Navigation is stored as ids only; levels are always derived from the live `items`, so a
+// new `items` array (e.g. an inline literal re-created each render) never resets the dock.
 interface NavState {
-  stack: DockBarEntry[][];
-  breadcrumb: DockBarItem[];
+  pathIds: string[];
   phase: DockBarAnimationPhase;
   direction: DockBarNavDirection;
-  pendingParent: DockBarItem | null;
+  /** Forward: id of the item being entered. Back: id of the item being left. */
+  pendingId: string | null;
   focusTargetId: string | null;
-  lastEvent: DockBarNavigateEvent | null;
+  lastEvent: CompletedNavigation | null;
 }
 
 type NavAction =
-  | { type: 'NAVIGATE_FORWARD'; item: DockBarItem }
+  | { type: 'NAVIGATE_FORWARD'; id: string }
   | { type: 'NAVIGATE_BACK' }
   | { type: 'COLLAPSE_END' }
   | { type: 'EXPAND_END' }
   | { type: 'CLEAR_EVENT' }
-  | { type: 'RESET'; items: DockBarEntry[] };
+  | { type: 'SYNC_PATH'; pathIds: string[] };
 
-function createInitialState(items: DockBarEntry[]): NavState {
-  return {
-    stack: [items],
-    breadcrumb: [],
-    phase: 'idle',
-    direction: null,
-    pendingParent: null,
-    focusTargetId: null,
-    lastEvent: null,
-  };
-}
+const initialState: NavState = {
+  pathIds: [],
+  phase: 'idle',
+  direction: null,
+  pendingId: null,
+  focusTargetId: null,
+  lastEvent: null,
+};
 
 function reducer(state: NavState, action: NavAction): NavState {
   switch (action.type) {
-    case 'NAVIGATE_FORWARD': {
-      if (state.phase !== 'idle' || !action.item.children?.length) {
+    case 'NAVIGATE_FORWARD':
+      if (state.phase !== 'idle') {
         return state;
       }
-      return { ...state, phase: 'collapsing', direction: 'forward', pendingParent: action.item };
-    }
+      return { ...state, phase: 'collapsing', direction: 'forward', pendingId: action.id };
     case 'NAVIGATE_BACK': {
-      if (state.phase !== 'idle' || state.stack.length <= 1) {
+      if (state.phase !== 'idle' || state.pathIds.length === 0) {
         return state;
       }
-      const returningTo = state.breadcrumb[state.breadcrumb.length - 1];
-      return { ...state, phase: 'collapsing', direction: 'back', pendingParent: returningTo };
+      const leavingId = state.pathIds[state.pathIds.length - 1];
+      return { ...state, phase: 'collapsing', direction: 'back', pendingId: leavingId };
     }
-    case 'COLLAPSE_END': {
-      if (state.phase !== 'collapsing') {
+    case 'COLLAPSE_END':
+      if (state.phase !== 'collapsing' || !state.pendingId) {
         return state;
       }
-      if (state.direction === 'forward' && state.pendingParent) {
-        return {
-          ...state,
-          stack: [...state.stack, state.pendingParent.children ?? []],
-          breadcrumb: [...state.breadcrumb, state.pendingParent],
-          phase: 'expanding',
-        };
-      }
-      if (state.direction === 'back') {
-        return {
-          ...state,
-          stack: state.stack.slice(0, -1),
-          breadcrumb: state.breadcrumb.slice(0, -1),
-          phase: 'expanding',
-        };
-      }
-      return state;
-    }
-    case 'EXPAND_END': {
-      if (state.phase !== 'expanding' || !state.direction || !state.pendingParent) {
-        return state;
-      }
-      const depth = state.stack.length - 1;
-      const focusTargetId =
-        state.direction === 'forward' ? DOCKBAR_BACK_ID : state.pendingParent.id;
-      const lastEvent: DockBarNavigateEvent = {
-        direction: state.direction,
-        depth,
-        path: state.breadcrumb,
-        item: state.pendingParent,
+      return {
+        ...state,
+        phase: 'expanding',
+        pathIds:
+          state.direction === 'forward'
+            ? [...state.pathIds, state.pendingId]
+            : state.pathIds.slice(0, -1),
       };
+    case 'EXPAND_END':
+      if (state.phase !== 'expanding' || !state.direction || !state.pendingId) {
+        return state;
+      }
       return {
         ...state,
         phase: 'idle',
         direction: null,
-        pendingParent: null,
-        focusTargetId,
-        lastEvent,
+        pendingId: null,
+        focusTargetId: state.direction === 'forward' ? DOCKBAR_BACK_ID : state.pendingId,
+        lastEvent: {
+          direction: state.direction,
+          pathIds: state.pathIds,
+          itemId: state.pendingId,
+        },
       };
-    }
     case 'CLEAR_EVENT':
       return state.lastEvent ? { ...state, lastEvent: null } : state;
-    case 'RESET':
-      return createInitialState(action.items);
+    case 'SYNC_PATH':
+      return { ...state, pathIds: action.pathIds };
     default:
       return state;
   }
@@ -134,12 +123,16 @@ export function useDockBarNavigation(
     onNavigate,
   }: UseDockBarNavigationOptions,
 ): UseDockBarNavigationResult {
-  const [state, dispatch] = useReducer(reducer, rootItems, createInitialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rootItemsRef = useRef(rootItems);
   const isInstant = instant || animationDuration <= 0;
+
+  const { breadcrumb, level } = useMemo(
+    () => resolvePath(rootItems, state.pathIds),
+    [rootItems, state.pathIds],
+  );
 
   const clearTimer = useCallback(() => {
     if (timeoutRef.current !== null) {
@@ -148,17 +141,16 @@ export function useDockBarNavigation(
     }
   }, []);
 
-  // Reset navigation state whenever the consumer swaps `items` to a different array.
+  // If the consumer removed a parent we are inside, drop the ids that no longer resolve so
+  // the dock settles on the deepest level that still exists.
   useEffect(() => {
-    if (rootItemsRef.current !== rootItems) {
-      rootItemsRef.current = rootItems;
-      clearTimer();
-      dispatch({ type: 'RESET', items: rootItems });
+    if (breadcrumb.length < state.pathIds.length) {
+      dispatch({ type: 'SYNC_PATH', pathIds: breadcrumb.map((item) => item.id) });
     }
-  }, [rootItems, clearTimer]);
+  }, [breadcrumb, state.pathIds]);
 
   // Drive phase progression: instantly when animations are disabled, otherwise via a
-  // timeout safety net that only fires if the real `transitionend` event is dropped.
+  // timeout safety net that only fires if the real `animationend` event is dropped.
   useEffect(() => {
     if (state.phase === 'idle') {
       return;
@@ -175,19 +167,38 @@ export function useDockBarNavigation(
     return clearTimer;
   }, [state.phase, isInstant, animationDuration, clearTimer]);
 
-  // Fire the public onNavigate callback exactly once per completed navigation.
+  // Fire the public onNavigate callback exactly once per completed navigation, resolving the
+  // ids against the current items.
   useEffect(() => {
-    if (state.lastEvent) {
-      onNavigateRef.current?.(state.lastEvent);
-      dispatch({ type: 'CLEAR_EVENT' });
+    const completed = state.lastEvent;
+    if (!completed) {
+      return;
     }
-  }, [state.lastEvent]);
+    dispatch({ type: 'CLEAR_EVENT' });
+    const resolved = resolvePath(rootItems, completed.pathIds);
+    const item =
+      completed.direction === 'forward'
+        ? resolved.breadcrumb[resolved.breadcrumb.length - 1]
+        : resolved.level.find(
+            (entry): entry is DockBarItem =>
+              entry.type !== 'separator' && entry.id === completed.itemId,
+          );
+    if (item?.id !== completed.itemId) {
+      return;
+    }
+    onNavigateRef.current?.({
+      direction: completed.direction,
+      depth: resolved.breadcrumb.length,
+      path: resolved.breadcrumb,
+      item,
+    });
+  }, [state.lastEvent, rootItems]);
 
   const navigateTo = useCallback((item: DockBarItem) => {
     if (!item.children?.length) {
       return;
     }
-    dispatch({ type: 'NAVIGATE_FORWARD', item });
+    dispatch({ type: 'NAVIGATE_FORWARD', id: item.id });
   }, []);
 
   const navigateBack = useCallback(() => {
@@ -208,15 +219,12 @@ export function useDockBarNavigation(
     [state.phase, isInstant, clearTimer],
   );
 
-  const depth = state.stack.length - 1;
-  const levelItems = state.stack[state.stack.length - 1];
-
   return {
-    levelItems,
+    levelItems: level,
     phase: state.phase,
     direction: state.direction,
-    depth,
-    breadcrumb: state.breadcrumb,
+    depth: breadcrumb.length,
+    breadcrumb,
     focusTargetId: state.focusTargetId,
     navigateTo,
     navigateBack,

@@ -233,20 +233,72 @@ describe('DockBar', () => {
     expect(items[3].onSelect).not.toHaveBeenCalled();
   });
 
-  it('resets cleanly to the new root level when the items prop identity changes mid-animation', async () => {
-    const user = userEvent.setup();
-    const items = nestedItems();
-    const { container, rerender } = render(<DockBar items={items} />);
+  describe('when the items prop changes', () => {
+    const drillIntoSettings = async (container: HTMLElement) => {
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+    };
 
-    await user.click(screen.getByRole('button', { name: /Settings/ }));
-    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'collapsing');
+    it('keeps the current nested level when items are re-created with a new identity', async () => {
+      // Simulates `items={[...]}` written inline in a parent that re-renders.
+      const { container, rerender } = render(<DockBar items={nestedItems()} />);
+      await drillIntoSettings(container);
 
-    const nextItems = flatItems();
-    rerender(<DockBar items={nextItems} />);
+      rerender(<DockBar items={nestedItems()} />);
 
-    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
-    expect(screen.getByRole('button', { name: 'Finder' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Back/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Wi-Fi' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Finder' })).not.toBeInTheDocument();
+    });
+
+    it('reflects updated data of the current nested level immediately', async () => {
+      const { container, rerender } = render(<DockBar items={nestedItems()} />);
+      await drillIntoSettings(container);
+
+      const updated = nestedItems();
+      const [, settings] = updated;
+      settings.children = [
+        { id: 'wifi', label: 'Wi-Fi 6E', icon: <span>W</span>, badge: 2 },
+        { id: 'bluetooth', label: 'Bluetooth', icon: <span>B</span> },
+      ];
+      rerender(<DockBar items={updated} />);
+
+      expect(screen.getByRole('button', { name: 'Wi-Fi 6E' })).toBeInTheDocument();
+    });
+
+    it('falls back to the deepest level that still exists when the current parent is removed', async () => {
+      const onNavigate = jest.fn();
+      const { container, rerender } = render(
+        <DockBar items={nestedItems()} onNavigate={onNavigate} />,
+      );
+      await drillIntoSettings(container);
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+
+      rerender(<DockBar items={flatItems()} onNavigate={onNavigate} />);
+
+      // Falling back is not a user navigation, so no extra onNavigate call.
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+      expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
+    });
+
+    it('lands on the root when the parent disappears mid-transition', async () => {
+      const user = userEvent.setup();
+      const { container, rerender } = render(<DockBar items={nestedItems()} />);
+
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      rerender(<DockBar items={flatItems()} />);
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
+      expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+    });
   });
 
   describe('back bubble', () => {
