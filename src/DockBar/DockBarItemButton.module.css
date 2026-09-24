@@ -39,9 +39,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70%;
-  height: 70%;
-  font-size: calc(var(--dockbar-item-current-size) * 0.55);
+  width: calc(var(--dockbar-icon-scale, 0.7) * 100%);
+  height: calc(var(--dockbar-icon-scale, 0.7) * 100%);
+  font-size: calc(var(--dockbar-item-current-size) * var(--dockbar-icon-scale, 0.7) * 0.8);
   line-height: 1;
   pointer-events: none;
 }
@@ -72,6 +72,14 @@
   transition:
     opacity 120ms ease-out,
     transform 120ms ease-out;
+}
+
+.back .icon {
+  color: var(--dockbar-accent);
+}
+
+[data-dockbar-variant="pill"] .label {
+  bottom: calc(100% + var(--dockbar-padding) + 8px);
 }
 
 [data-dockbar-orientation="vertical"] .label {
@@ -133,6 +141,28 @@
   transform: translateY(-50%);
 }
 
-.back .icon {
-  color: var(--dockbar-accent);
+[data-dockbar-variant="pill"] .item {
+  transition-property: width, height, background-color, color;
+}
+
+[data-dockbar-variant="pill"] .item:hover:not(:disabled) {
+  background: var(--dockbar-item-hover-bg);
+}
+
+[data-dockbar-variant="pill"] .item[data-dockbar-active="self"],
+[data-dockbar-variant="pill"] .item[data-dockbar-active="self"]:hover {
+  background: var(--dockbar-active-bg);
+  color: var(--dockbar-active-fg);
+}
+
+[data-dockbar-variant="pill"] .item[data-dockbar-active="ancestor"] {
+  background: var(--dockbar-item-hover-bg);
+}
+
+[data-dockbar-variant="pill"] .item[data-dockbar-active]::after {
+  display: none;
+}
+
+[data-dockbar-variant="pill"] .back .icon {
+  color: inherit;
 }

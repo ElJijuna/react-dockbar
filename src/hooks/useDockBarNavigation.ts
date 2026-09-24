@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { DEFAULT_ANIMATION_DURATION_MS, DOCKBAR_BACK_ID } from '../constants';
-import type { DockBarItem, DockBarNavigateEvent } from '../types';
+import type { DockBarEntry, DockBarItem, DockBarNavigateEvent } from '../types';
 
 export type DockBarAnimationPhase = 'idle' | 'collapsing' | 'expanding';
 export type DockBarNavDirection = 'forward' | 'back' | null;
 
 interface NavState {
-  stack: DockBarItem[][];
+  stack: DockBarEntry[][];
   breadcrumb: DockBarItem[];
   phase: DockBarAnimationPhase;
   direction: DockBarNavDirection;
@@ -21,9 +21,9 @@ type NavAction =
   | { type: 'COLLAPSE_END' }
   | { type: 'EXPAND_END' }
   | { type: 'CLEAR_EVENT' }
-  | { type: 'RESET'; items: DockBarItem[] };
+  | { type: 'RESET'; items: DockBarEntry[] };
 
-function createInitialState(items: DockBarItem[]): NavState {
+function createInitialState(items: DockBarEntry[]): NavState {
   return {
     stack: [items],
     breadcrumb: [],
@@ -112,7 +112,7 @@ export interface UseDockBarNavigationOptions {
 }
 
 export interface UseDockBarNavigationResult {
-  levelItems: DockBarItem[];
+  levelItems: DockBarEntry[];
   phase: DockBarAnimationPhase;
   direction: DockBarNavDirection;
   depth: number;
@@ -128,7 +128,7 @@ export interface UseDockBarNavigationResult {
 
 /** Stack-based drill-down navigation state machine driving the DockBar's shrink/expand transitions. */
 export function useDockBarNavigation(
-  rootItems: DockBarItem[],
+  rootItems: DockBarEntry[],
   {
     backItem,
     animationDuration = DEFAULT_ANIMATION_DURATION_MS,

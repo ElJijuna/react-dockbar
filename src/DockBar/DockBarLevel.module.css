@@ -7,7 +7,7 @@
   box-sizing: content-box;
   height: var(--dockbar-item-size);
   gap: var(--dockbar-gap);
-  padding: var(--dockbar-padding);
+  padding: var(--dockbar-padding) var(--dockbar-padding-inline, var(--dockbar-padding));
   border-radius: var(--dockbar-radius);
   background: var(--dockbar-bg);
   backdrop-filter: blur(var(--dockbar-blur));
@@ -23,6 +23,28 @@
   align-items: flex-start;
   height: auto;
   width: var(--dockbar-item-size);
+  padding: var(--dockbar-padding-inline, var(--dockbar-padding)) var(--dockbar-padding);
+}
+
+/* Pill items grow symmetrically so magnification stays inside the rounded bar. */
+[data-dockbar-variant="pill"] .level {
+  align-items: center;
+}
+
+.separator {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: calc(var(--dockbar-item-size) * 0.6);
+  margin: 0 calc(var(--dockbar-gap) + 2px);
+  border: 0;
+  background: var(--dockbar-separator-color);
+}
+
+[data-dockbar-orientation="vertical"] .separator {
+  width: calc(var(--dockbar-item-size) * 0.6);
+  height: 1px;
+  margin: calc(var(--dockbar-gap) + 2px) 0;
 }
 
 .level[data-dockbar-phase="collapsing"] {

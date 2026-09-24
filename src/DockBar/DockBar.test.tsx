@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { endLevelTransition } from '../test-utils/fireLevelTransition';
-import type { DockBarItem } from '../types';
+import type { DockBarEntry, DockBarItem } from '../types';
 import { DockBar } from './DockBar';
 
 const settingsChildren: DockBarItem[] = [
@@ -247,6 +247,50 @@ describe('DockBar', () => {
     expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
     expect(screen.getByRole('button', { name: 'Finder' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Back/ })).not.toBeInTheDocument();
+  });
+
+  describe('separators', () => {
+    const groupedItems = (): DockBarEntry[] => [
+      { id: 'finder', label: 'Finder', icon: <span>F</span> },
+      { type: 'separator', id: 'sep' },
+      { id: 'mail', label: 'Mail', icon: <span>M</span> },
+      { id: 'photos', label: 'Photos', icon: <span>P</span> },
+    ];
+
+    it('renders separators as accessible, non-focusable dividers between items', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={groupedItems()} />);
+
+      const separator = screen.getByRole('separator');
+      expect(separator).toHaveAttribute('aria-orientation', 'vertical');
+
+      await user.tab();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveFocus();
+    });
+
+    it('keeps magnification aligned to items, skipping separators', () => {
+      const { container } = render(
+        <DockBar items={groupedItems()} magnification={{ scale: 1.5, distance: 150 }} />,
+      );
+      container.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]').forEach((el, i) => {
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+          x: i * 60,
+          y: 0,
+          left: i * 60,
+          top: 0,
+          width: 50,
+          height: 50,
+          right: i * 60 + 50,
+          bottom: 50,
+          toJSON: () => ({}),
+        });
+      });
+
+      // Mail is the 2nd item element (index 1), centered at x=85.
+      fireEvent.mouseMove(getLevel(container), { clientX: 85 });
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
+    });
   });
 
   describe('active item', () => {

@@ -47,8 +47,9 @@ function AppMenuBar() {
   `aria-current`; parents containing a nested active item get a dimmer dot.
 - **Hover magnification**: items scale up under the pointer, tapering off for nearby
   neighbors, matching macOS Dock behavior. Tune or disable via the `magnification` prop.
-- **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid'`)
-  props switch themes; deeper customization is available through CSS custom properties
+- **Separators**: add `{ type: 'separator', id: 'sep-1' }` entries to split items into groups.
+- **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid' | 'pill'`)
+  props switch themes (`pill` is a compact rounded toolbar with a filled active item); deeper customization is available through CSS custom properties
   (`--dockbar-bg`, `--dockbar-blur`, `--dockbar-accent`, `--dockbar-item-size`, ...) documented
   in `src/theme/tokens.css`.
 - **Accessibility**: renders as a `role="toolbar"` of native `<button>`/`<a>` elements, moves

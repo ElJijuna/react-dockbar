@@ -19,6 +19,7 @@
   --dockbar-accent: #0a84ff;
   --dockbar-tooltip-bg: rgba(255, 255, 255, 0.92);
   --dockbar-tooltip-fg: #1c1c1e;
+  --dockbar-separator-color: rgba(0, 0, 0, 0.12);
 }
 
 [data-dockbar-color-scheme="dark"] {
@@ -31,6 +32,7 @@
   --dockbar-accent: #409cff;
   --dockbar-tooltip-bg: rgba(44, 44, 46, 0.92);
   --dockbar-tooltip-fg: #f5f5f7;
+  --dockbar-separator-color: rgba(255, 255, 255, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,6 +45,7 @@
     --dockbar-accent: #409cff;
     --dockbar-tooltip-bg: rgba(44, 44, 46, 0.92);
     --dockbar-tooltip-fg: #f5f5f7;
+    --dockbar-separator-color: rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -58,6 +61,58 @@
 @media (prefers-color-scheme: dark) {
   [data-dockbar-variant="solid"][data-dockbar-color-scheme="auto"] {
     --dockbar-bg: #1c1c1e;
+  }
+}
+
+/* Pill: compact opaque rounded toolbar with a filled active item. */
+[data-dockbar-variant="pill"] {
+  --dockbar-radius: 999px;
+  --dockbar-item-radius: 8px;
+  --dockbar-gap: 4px;
+  --dockbar-padding: 6px;
+  --dockbar-padding-inline: 14px;
+  --dockbar-icon-scale: 0.5;
+  --dockbar-blur: 0px;
+  --dockbar-bg: #ffffff;
+  --dockbar-border-color: rgba(0, 0, 0, 0.06);
+  --dockbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  --dockbar-fg: #202124;
+  --dockbar-fg-muted: rgba(32, 33, 36, 0.55);
+  --dockbar-item-hover-bg: rgba(0, 0, 0, 0.06);
+  --dockbar-active-bg: #2d2d2d;
+  --dockbar-active-fg: #ffffff;
+  --dockbar-separator-color: rgba(0, 0, 0, 0.12);
+  --dockbar-tooltip-bg: #2d2d2d;
+  --dockbar-tooltip-fg: #ffffff;
+}
+
+[data-dockbar-variant="pill"][data-dockbar-color-scheme="dark"] {
+  --dockbar-bg: #1f1f1f;
+  --dockbar-border-color: rgba(255, 255, 255, 0.08);
+  --dockbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  --dockbar-fg: #e8e8e8;
+  --dockbar-fg-muted: rgba(232, 232, 232, 0.55);
+  --dockbar-item-hover-bg: rgba(255, 255, 255, 0.08);
+  --dockbar-active-bg: #e8e8e8;
+  --dockbar-active-fg: #1f1f1f;
+  --dockbar-separator-color: rgba(255, 255, 255, 0.14);
+  --dockbar-tooltip-bg: #e8e8e8;
+  --dockbar-tooltip-fg: #1f1f1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-dockbar-variant="pill"][data-dockbar-color-scheme="auto"] {
+    --dockbar-bg: #1f1f1f;
+    --dockbar-border-color: rgba(255, 255, 255, 0.08);
+    --dockbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    --dockbar-fg: #e8e8e8;
+    --dockbar-fg-muted: rgba(232, 232, 232, 0.55);
+    --dockbar-item-hover-bg: rgba(255, 255, 255, 0.08);
+    --dockbar-active-bg: #e8e8e8;
+    --dockbar-active-fg: #1f1f1f;
+    --dockbar-separator-color: rgba(255, 255, 255, 0.14);
+    --dockbar-tooltip-bg: #e8e8e8;
+    --dockbar-tooltip-fg: #1f1f1f;
   }
 }
 

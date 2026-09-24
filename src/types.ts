@@ -1,12 +1,13 @@
 import type { AnchorHTMLAttributes, CSSProperties, ReactNode } from 'react';
 
 export interface DockBarItem {
+  type?: 'item';
   /** Stable unique id among its sibling array. Used for React keys and navigation. */
   id: string;
   label: string;
   icon: ReactNode;
   /** Presence of children turns the item into a drill-down trigger instead of a leaf action. */
-  children?: DockBarItem[];
+  children?: DockBarEntry[];
   /** Called when a leaf item is activated. Never called for items that have children. */
   onSelect?: (event: DockBarSelectEvent) => void;
   href?: string;
@@ -15,6 +16,14 @@ export interface DockBarItem {
   badge?: ReactNode;
   'aria-label'?: string;
 }
+
+/** Thin divider between groups of items. */
+export interface DockBarSeparator {
+  type: 'separator';
+  id: string;
+}
+
+export type DockBarEntry = DockBarItem | DockBarSeparator;
 
 export interface DockBarSelectEvent {
   item: DockBarItem;
@@ -31,7 +40,12 @@ export interface DockBarNavigateEvent {
 }
 
 export type DockBarColorScheme = 'light' | 'dark' | 'auto';
-export type DockBarVariant = 'glass' | 'solid';
+/**
+ * - `glass`: translucent frosted panel, dot active indicator.
+ * - `solid`: opaque panel, dot active indicator.
+ * - `pill`: compact opaque rounded toolbar, small icons, filled active item.
+ */
+export type DockBarVariant = 'glass' | 'solid' | 'pill';
 export type DockBarSize = 'sm' | 'md' | 'lg';
 export type DockBarOrientation = 'horizontal' | 'vertical';
 export type DockBarReducedMotionMode = 'system' | 'always' | 'never';
@@ -55,7 +69,7 @@ export interface DockBarItemState {
 }
 
 export interface DockBarProps {
-  items: DockBarItem[];
+  items: DockBarEntry[];
   /**
    * Id of the active item (controlled). Parents of a nested active item are marked too.
    * Pass `null` for no active item.

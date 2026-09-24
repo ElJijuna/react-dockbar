@@ -1,6 +1,7 @@
 .dockbar {
   display: inline-flex;
   box-sizing: border-box;
+  font-family: var(--dockbar-font-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
 }
 
 .dockbar * {
@@ -21,6 +22,21 @@
   --dockbar-item-size: 64px;
   --dockbar-radius: 24px;
   --dockbar-item-radius: 17px;
+}
+
+.size-sm[data-dockbar-variant="pill"] {
+  --dockbar-item-size: 30px;
+  --dockbar-item-radius: 7px;
+}
+
+.size-md[data-dockbar-variant="pill"] {
+  --dockbar-item-size: 36px;
+  --dockbar-item-radius: 8px;
+}
+
+.size-lg[data-dockbar-variant="pill"] {
+  --dockbar-item-size: 44px;
+  --dockbar-item-radius: 10px;
 }
 
 .visuallyHidden {

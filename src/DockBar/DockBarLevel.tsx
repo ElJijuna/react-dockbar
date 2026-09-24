@@ -4,16 +4,18 @@ import { DOCKBAR_BACK_ID } from '../constants';
 import type { DockBarAnimationPhase, DockBarNavDirection } from '../hooks/useDockBarNavigation';
 import { useMagnify } from '../hooks/useMagnify';
 import type {
+  DockBarEntry,
   DockBarItem,
   DockBarMagnificationConfig,
   DockBarOrientation,
   DockBarProps,
 } from '../types';
+import { isSeparator } from '../utils/isSeparator';
 import { DockBarItemButton } from './DockBarItemButton';
 import styles from './DockBarLevel.module.css';
 
 export interface DockBarLevelProps {
-  items: DockBarItem[];
+  items: DockBarEntry[];
   phase: DockBarAnimationPhase;
   direction: DockBarNavDirection;
   orientation: DockBarOrientation;
@@ -73,6 +75,7 @@ export const DockBarLevel = ({
   };
 
   const style = { '--dockbar-transition-duration': `${animationDuration}ms` } as CSSProperties;
+  let itemIndex = -1;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: pointer tracking for magnification only; items are native buttons
@@ -87,7 +90,21 @@ export const DockBarLevel = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={reset}
     >
-      {items.map((item, index) => {
+      {items.map((entry) => {
+        if (isSeparator(entry)) {
+          return (
+            <hr
+              key={entry.id}
+              aria-orientation={orientation === 'vertical' ? 'horizontal' : 'vertical'}
+              className={styles.separator}
+              data-dockbar-part="separator"
+            />
+          );
+        }
+        const item = entry;
+        // Magnification indexes only real items, matching the queried item elements.
+        itemIndex += 1;
+        const index = itemIndex;
         const isBack = item.id === DOCKBAR_BACK_ID;
         return (
           <DockBarItemButton
