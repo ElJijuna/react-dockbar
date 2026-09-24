@@ -9,6 +9,7 @@ export interface DockBarBackButtonProps {
   ariaLabel: string;
   /** Plays the exit animation while the dock collapses back to the root level. */
   leaving: boolean;
+  tabIndex: number;
   animationDuration: number;
   itemClassName?: DockBarProps['itemClassName'];
   onActivate: (
@@ -22,6 +23,7 @@ export const DockBarBackButton = ({
   item,
   ariaLabel,
   leaving,
+  tabIndex,
   animationDuration,
   itemClassName,
   onActivate,
@@ -42,6 +44,7 @@ export const DockBarBackButton = ({
       <DockBarItemButton
         item={item}
         isBack
+        tabIndex={tabIndex}
         ariaLabel={ariaLabel}
         scale={1}
         hovered={hovered}

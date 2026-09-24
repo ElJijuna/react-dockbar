@@ -3,6 +3,7 @@ import {
   type MouseEvent,
   type ReactElement,
   useCallback,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -15,8 +16,10 @@ import {
 } from '../constants';
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useRovingFocus } from '../hooks/useRovingFocus';
 import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
+import { isSeparator } from '../utils/isSeparator';
 import styles from './DockBar.module.css';
 import { DockBarBackButton } from './DockBarBackButton';
 import { DockBarLevel } from './DockBarLevel';
@@ -41,7 +44,6 @@ export const DockBar = ({
   itemClassName,
 }: DockBarProps): ReactElement => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const prevPhaseRef = useRef<'idle' | 'collapsing' | 'expanding'>('idle');
   const [liveMessage, setLiveMessage] = useState('');
   const [uncontrolledActiveId, setUncontrolledActiveId] = useState(defaultActiveId);
   const isActiveControlled = activeIdProp !== undefined;
@@ -86,7 +88,7 @@ export const DockBar = ({
     direction,
     depth,
     breadcrumb,
-    focusTargetId,
+    focusRequest,
     navigateTo,
     navigateBack,
     handleLevelAnimationEnd,
@@ -97,15 +99,15 @@ export const DockBar = ({
   });
 
   // Move focus to the newly-revealed Back button (drilling in) or back to the item the
-  // user originally drilled into (backing out) exactly once per completed navigation.
-  const wasAnimating = prevPhaseRef.current !== 'idle';
-  prevPhaseRef.current = phase;
-  if (phase === 'idle' && wasAnimating && focusTargetId) {
-    const target = containerRef.current?.querySelector<HTMLElement>(
-      `[data-dockbar-item-id="${CSS.escape(focusTargetId)}"]`,
-    );
-    target?.focus();
-  }
+  // user originally drilled into (backing out) once the new level is committed to the DOM.
+  useLayoutEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+    containerRef.current
+      ?.querySelector<HTMLElement>(`[data-dockbar-item-id="${CSS.escape(focusRequest.id)}"]`)
+      ?.focus();
+  }, [focusRequest]);
 
   const handleActivate = useCallback(
     (item: DockBarItem, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
@@ -128,14 +130,37 @@ export const DockBar = ({
     [navigateTo, navigateBack, breadcrumb, isActiveControlled],
   );
 
+  const focusableIds = useMemo(
+    () => [
+      ...(depth > 0 ? [DOCKBAR_BACK_ID] : []),
+      ...levelItems
+        .filter((entry): entry is DockBarItem => !isSeparator(entry) && !entry.disabled)
+        .map((item) => item.id),
+    ],
+    [depth, levelItems],
+  );
+  // Prefer the active item (or the parent that contains it) as the initial tab stop.
+  const preferredTabStopId =
+    [...activePathIds].reverse().find((id) => focusableIds.includes(id)) ?? null;
+
+  const roving = useRovingFocus({
+    containerRef,
+    orientation,
+    focusableIds,
+    preferredId: preferredTabStopId,
+    enabled: phase === 'idle',
+  });
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Escape' && depth > 0 && phase === 'idle') {
         event.stopPropagation();
         navigateBack();
+        return;
       }
+      roving.handleKeyDown(event);
     },
-    [depth, phase, navigateBack],
+    [depth, phase, navigateBack, roving],
   );
 
   const grandparent = breadcrumb[breadcrumb.length - 2];
@@ -159,12 +184,14 @@ export const DockBar = ({
       className={rootClassName}
       style={style}
       onKeyDown={handleKeyDown}
+      onFocus={roving.handleFocus}
     >
       {depth > 0 ? (
         <DockBarBackButton
           item={resolvedBackItem}
           ariaLabel={backAriaLabel}
           leaving={backLeaving}
+          tabIndex={roving.tabStopId === DOCKBAR_BACK_ID ? 0 : -1}
           animationDuration={animationDuration}
           itemClassName={itemClassName}
           onActivate={handleActivate}
@@ -179,6 +206,7 @@ export const DockBar = ({
         animationDuration={animationDuration}
         magnification={magnification}
         activePathIds={activePathIds}
+        tabStopId={roving.tabStopId}
         itemClassName={itemClassName}
         onActivate={handleActivate}
         onAnimationEnd={handleLevelAnimationEnd}

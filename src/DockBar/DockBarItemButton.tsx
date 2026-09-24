@@ -5,6 +5,8 @@ import styles from './DockBarItemButton.module.css';
 export interface DockBarItemButtonProps {
   item: DockBarItem;
   isBack: boolean;
+  /** Roving tabindex: 0 for the dock's single tab stop, -1 otherwise. */
+  tabIndex: number;
   ariaLabel?: string;
   scale: number;
   hovered: boolean;
@@ -23,6 +25,7 @@ export interface DockBarItemButtonProps {
 export const DockBarItemButton = ({
   item,
   isBack,
+  tabIndex,
   ariaLabel,
   scale,
   hovered,
@@ -104,7 +107,7 @@ export const DockBarItemButton = ({
         target={item.target}
         rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
         aria-disabled={item.disabled || undefined}
-        tabIndex={item.disabled ? -1 : undefined}
+        tabIndex={item.disabled ? -1 : tabIndex}
       >
         {content}
       </a>
@@ -112,7 +115,7 @@ export const DockBarItemButton = ({
   }
 
   return (
-    <button {...sharedProps} type="button" disabled={item.disabled}>
+    <button {...sharedProps} type="button" disabled={item.disabled} tabIndex={tabIndex}>
       {content}
     </button>
   );

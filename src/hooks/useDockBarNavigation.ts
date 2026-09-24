@@ -6,6 +6,11 @@ import { resolvePath } from '../utils/resolvePath';
 export type DockBarAnimationPhase = 'idle' | 'collapsing' | 'expanding';
 export type DockBarNavDirection = 'forward' | 'back' | null;
 
+export interface DockBarFocusRequest {
+  /** `data-dockbar-item-id` of the element to focus once navigation completes. */
+  id: string;
+}
+
 interface CompletedNavigation {
   direction: 'forward' | 'back';
   pathIds: string[];
@@ -20,7 +25,8 @@ interface NavState {
   direction: DockBarNavDirection;
   /** Forward: id of the item being entered. Back: id of the item being left. */
   pendingId: string | null;
-  focusTargetId: string | null;
+  /** New object per completed navigation, so repeated targets still trigger focus. */
+  focusRequest: DockBarFocusRequest | null;
   lastEvent: CompletedNavigation | null;
 }
 
@@ -37,7 +43,7 @@ const initialState: NavState = {
   phase: 'idle',
   direction: null,
   pendingId: null,
-  focusTargetId: null,
+  focusRequest: null,
   lastEvent: null,
 };
 
@@ -76,7 +82,7 @@ function reducer(state: NavState, action: NavAction): NavState {
         phase: 'idle',
         direction: null,
         pendingId: null,
-        focusTargetId: state.direction === 'forward' ? DOCKBAR_BACK_ID : state.pendingId,
+        focusRequest: { id: state.direction === 'forward' ? DOCKBAR_BACK_ID : state.pendingId },
         lastEvent: {
           direction: state.direction,
           pathIds: state.pathIds,
@@ -105,7 +111,7 @@ export interface UseDockBarNavigationResult {
   direction: DockBarNavDirection;
   depth: number;
   breadcrumb: DockBarItem[];
-  focusTargetId: string | null;
+  focusRequest: DockBarFocusRequest | null;
   navigateTo: (item: DockBarItem) => void;
   navigateBack: () => void;
   handleLevelAnimationEnd: (event: {
@@ -225,7 +231,7 @@ export function useDockBarNavigation(
     direction: state.direction,
     depth: breadcrumb.length,
     breadcrumb,
-    focusTargetId: state.focusTargetId,
+    focusRequest: state.focusRequest,
     navigateTo,
     navigateBack,
     handleLevelAnimationEnd,

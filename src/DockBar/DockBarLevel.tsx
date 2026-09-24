@@ -22,6 +22,8 @@ export interface DockBarLevelProps {
   magnification: boolean | DockBarMagnificationConfig | undefined;
   /** Root-first ids of the active item and its ancestors. */
   activePathIds: string[];
+  /** Id of the single item reachable with Tab (roving tabindex). */
+  tabStopId: string | null;
   itemClassName?: DockBarProps['itemClassName'];
   onActivate: (
     item: DockBarItem,
@@ -41,6 +43,7 @@ export const DockBarLevel = ({
   animationDuration,
   magnification,
   activePathIds,
+  tabStopId,
   itemClassName,
   onActivate,
   onAnimationEnd,
@@ -107,6 +110,7 @@ export const DockBarLevel = ({
             key={item.id}
             item={item}
             isBack={false}
+            tabIndex={item.id === tabStopId ? 0 : -1}
             scale={getScale(index)}
             hovered={hoveredIndex === index}
             active={item.id === activeId}

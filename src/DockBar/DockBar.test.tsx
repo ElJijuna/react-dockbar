@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { endLevelTransition } from '../test-utils/fireLevelTransition';
 import type { DockBarEntry, DockBarItem } from '../types';
 import { DockBar } from './DockBar';
@@ -124,6 +125,217 @@ describe('DockBar', () => {
     expect(screen.getByRole('button', { name: /Settings/ })).toHaveFocus();
   });
 
+  describe('keyboard navigation (roving tabindex)', () => {
+    const grouped = (): DockBarEntry[] => [
+      { id: 'finder', label: 'Finder', icon: <span>F</span> },
+      { type: 'separator', id: 'sep' },
+      { id: 'mail', label: 'Mail', icon: <span>M</span> },
+      { id: 'trash', label: 'Trash', icon: <span>T</span>, disabled: true },
+      { id: 'photos', label: 'Photos', icon: <span>P</span> },
+    ];
+    const button = (name: string | RegExp) => screen.getByRole('button', { name });
+
+    it('exposes a single tab stop for the whole dock', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <DockBar items={grouped()} />
+          <button type="button">Outside</button>
+        </>,
+      );
+
+      const tabStops = screen
+        .getByRole('toolbar')
+        .querySelectorAll('[data-dockbar-item-id][tabindex="0"]');
+      expect(tabStops).toHaveLength(1);
+
+      await user.tab();
+      expect(button('Finder')).toHaveFocus();
+      await user.tab();
+      expect(button('Outside')).toHaveFocus();
+    });
+
+    it('moves with ArrowRight/ArrowLeft, wrapping and skipping separators and disabled items', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={grouped()} />);
+      await user.tab();
+
+      await user.keyboard('{ArrowRight}');
+      expect(button('Mail')).toHaveFocus();
+      await user.keyboard('{ArrowRight}');
+      expect(button('Photos')).toHaveFocus();
+      await user.keyboard('{ArrowRight}');
+      expect(button('Finder')).toHaveFocus();
+      await user.keyboard('{ArrowLeft}');
+      expect(button('Photos')).toHaveFocus();
+    });
+
+    it('jumps to the ends with Home and End', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={grouped()} />);
+      await user.tab();
+
+      await user.keyboard('{End}');
+      expect(button('Photos')).toHaveFocus();
+      await user.keyboard('{Home}');
+      expect(button('Finder')).toHaveFocus();
+    });
+
+    it('uses ArrowDown/ArrowUp when vertical and ignores horizontal arrows', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={grouped()} orientation="vertical" />);
+      await user.tab();
+
+      await user.keyboard('{ArrowRight}');
+      expect(button('Finder')).toHaveFocus();
+      await user.keyboard('{ArrowDown}');
+      expect(button('Mail')).toHaveFocus();
+      await user.keyboard('{ArrowUp}');
+      expect(button('Finder')).toHaveFocus();
+    });
+
+    it('reverses horizontal arrows in right-to-left layouts', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={grouped()} style={{ direction: 'rtl' }} />);
+      await user.tab();
+
+      await user.keyboard('{ArrowLeft}');
+      expect(button('Mail')).toHaveFocus();
+    });
+
+    it('remembers the last focused item as the tab stop when tabbing back in', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <DockBar items={grouped()} />
+          <button type="button">Outside</button>
+        </>,
+      );
+      await user.tab();
+      await user.keyboard('{End}');
+      await user.tab();
+      expect(button('Outside')).toHaveFocus();
+
+      await user.tab({ shift: true });
+      expect(button('Photos')).toHaveFocus();
+    });
+
+    it('starts on the active item, or on the parent that contains it', async () => {
+      const user = userEvent.setup();
+      const { unmount } = render(<DockBar items={grouped()} activeId="mail" />);
+      await user.tab();
+      expect(button('Mail')).toHaveFocus();
+      unmount();
+
+      render(<DockBar items={nestedItems()} activeId="bluetooth" />);
+      await user.tab();
+      expect(button(/Settings/)).toHaveFocus();
+    });
+
+    it('includes the Back bubble as the first stop inside a nested level', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={nestedItems()} />);
+      await user.tab();
+      await user.keyboard('{ArrowRight}{Enter}');
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(button('Back')).toHaveFocus();
+
+      await user.keyboard('{ArrowRight}');
+      expect(button('Wi-Fi')).toHaveFocus();
+      await user.keyboard('{Home}');
+      expect(button('Back')).toHaveFocus();
+      await user.keyboard('{ArrowLeft}');
+      expect(button('Bluetooth')).toHaveFocus();
+    });
+
+    it('ignores arrow keys while a level transition is running', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={nestedItems()} />);
+      await user.tab();
+      await user.keyboard('{ArrowRight}{Enter}');
+      expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'collapsing');
+
+      await user.keyboard('{ArrowLeft}');
+      expect(button(/Settings/)).toHaveFocus();
+    });
+  });
+
+  describe('focus management', () => {
+    const threeLevels = (): DockBarEntry[] => [
+      { id: 'finder', label: 'Finder', icon: <span>F</span> },
+      {
+        id: 'settings',
+        label: 'Settings',
+        icon: <span>S</span>,
+        children: [
+          {
+            id: 'network',
+            label: 'Network',
+            icon: <span>N</span>,
+            children: [{ id: 'vpn', label: 'VPN', icon: <span>V</span> }],
+          },
+        ],
+      },
+    ];
+
+    it('moves focus correctly under StrictMode', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <StrictMode>
+          <DockBar items={nestedItems()} />
+        </StrictMode>,
+      );
+
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(screen.getByRole('button', { name: 'Back' })).toHaveFocus();
+
+      await user.keyboard('{Enter}');
+      endLevelTransition(container);
+      endLevelTransition(container);
+      expect(screen.getByRole('button', { name: /Settings/ })).toHaveFocus();
+    });
+
+    it('focuses Back again when drilling into consecutive levels (same focus target)', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={threeLevels()} />);
+
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+      await user.click(screen.getByRole('button', { name: /Network/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      expect(screen.getByRole('button', { name: 'Back to Settings' })).toHaveFocus();
+    });
+
+    it('does not steal focus back when re-rendering after a navigation', async () => {
+      const user = userEvent.setup();
+      const { container, rerender } = render(
+        <>
+          <DockBar items={nestedItems()} />
+          <button type="button">Outside</button>
+        </>,
+      );
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      await user.click(screen.getByRole('button', { name: 'Outside' }));
+      rerender(
+        <>
+          <DockBar items={nestedItems()} />
+          <button type="button">Outside</button>
+        </>,
+      );
+
+      expect(screen.getByRole('button', { name: 'Outside' })).toHaveFocus();
+    });
+  });
+
   it('reflects the colorScheme and variant props as data attributes on the root element', () => {
     const { rerender } = render(<DockBar items={flatItems()} colorScheme="dark" variant="solid" />);
     expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-color-scheme', 'dark');
@@ -191,7 +403,7 @@ describe('DockBar', () => {
       mockItemRects(container);
 
       await user.tab();
-      await user.tab();
+      await user.keyboard('{ArrowRight}');
       expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
     });
 
@@ -379,7 +591,7 @@ describe('DockBar', () => {
       expect(separator).toHaveAttribute('aria-orientation', 'vertical');
 
       await user.tab();
-      await user.tab();
+      await user.keyboard('{ArrowRight}');
       expect(screen.getByRole('button', { name: 'Mail' })).toHaveFocus();
     });
 

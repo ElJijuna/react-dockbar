@@ -49,7 +49,7 @@ describe('useDockBarNavigation', () => {
 
     act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
     expect(result.current.phase).toBe('idle');
-    expect(result.current.focusTargetId).toBe(DOCKBAR_BACK_ID);
+    expect(result.current.focusRequest).toEqual({ id: DOCKBAR_BACK_ID });
   });
 
   it('ignores animation-end events bubbled from a child instead of the level wrapper itself', () => {
@@ -75,7 +75,7 @@ describe('useDockBarNavigation', () => {
 
     expect(result.current.phase).toBe('idle');
     expect(result.current.levelItems).toEqual(rootItems);
-    expect(result.current.focusTargetId).toBe('settings');
+    expect(result.current.focusRequest).toEqual({ id: 'settings' });
   });
 
   it('ignores navigateTo/navigateBack calls while a transition is already in progress', () => {
