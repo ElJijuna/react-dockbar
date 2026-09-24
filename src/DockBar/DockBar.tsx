@@ -4,7 +4,6 @@ import {
   type ReactElement,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -17,6 +16,7 @@ import {
   DOCKBAR_BACK_ID,
 } from '../constants';
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
+import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useRovingFocus } from '../hooks/useRovingFocus';
 import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
@@ -120,7 +120,7 @@ export const DockBar = ({
 
   // Move focus to the newly-revealed Back button (drilling in) or back to the item the
   // user originally drilled into (backing out) once the new level is committed to the DOM.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!focusRequest) {
       return;
     }

@@ -8,7 +8,13 @@ on:
 
 jobs:
   build:
+    name: React ${{ matrix.react }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both majors in peerDependencies. The lockfile pins 19; 18 is swapped in per job.
+        react: ['18', '19']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,8 +22,21 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run lint
+
+      - name: Use React ${{ matrix.react }}
+        if: matrix.react != '19'
+        run: >
+          npm install --no-save
+          react@^${{ matrix.react }} react-dom@^${{ matrix.react }}
+          @types/react@^${{ matrix.react }} @types/react-dom@^${{ matrix.react }}
+
       - run: npm run typecheck
       - run: npm test -- --coverage
-      - run: npm run build
-      - run: npm run build:storybook
+
+      # Version-independent checks only need to run once.
+      - if: matrix.react == '19'
+        run: npm run lint
+      - if: matrix.react == '19'
+        run: npm run build
+      - if: matrix.react == '19'
+        run: npm run build:storybook

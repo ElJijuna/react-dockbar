@@ -9,8 +9,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  react18:
+    name: Test on React 18
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: >
+          npm install --no-save
+          react@^18 react-dom@^18 @types/react@^18 @types/react-dom@^18
+      - run: npm run typecheck
+      - run: npm test
+
   release:
     name: Test & publish to npm
+    # Never publish a version that breaks the React 18 half of peerDependencies.
+    needs: react18
     runs-on: ubuntu-latest
     permissions:
       contents: write # create tags and GitHub releases
