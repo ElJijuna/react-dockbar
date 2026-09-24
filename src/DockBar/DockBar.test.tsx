@@ -513,6 +513,101 @@ describe('DockBar', () => {
     });
   });
 
+  describe('labels (i18n)', () => {
+    const threeLevels = (): DockBarEntry[] => [
+      { id: 'finder', label: 'Finder', icon: <span>F</span> },
+      {
+        id: 'settings',
+        label: 'Ajustes',
+        icon: <span>S</span>,
+        children: [
+          {
+            id: 'network',
+            label: 'Red',
+            icon: <span>N</span>,
+            children: [{ id: 'vpn', label: 'VPN', icon: <span>V</span> }],
+          },
+          { type: 'separator', id: 'sep' },
+          { id: 'display', label: 'Pantalla', icon: <span>D</span> },
+        ],
+      },
+    ];
+    const spanish = {
+      parentItem: (label: string, count: number) =>
+        `${label}, abre ${count} ${count === 1 ? 'opción' : 'opciones'}`,
+      backTo: (label: string) => `Volver a ${label}`,
+      enteredLevel: (label: string, depth: number) => `${label}, nivel ${depth + 1}`,
+      returnedTo: (label: string | null) =>
+        label ? `De vuelta en ${label}` : 'De vuelta en el menú principal',
+    };
+    const liveRegion = () => screen.getByRole('status');
+
+    const drill = async (container: HTMLElement, name: RegExp) => {
+      await userEvent.setup().click(screen.getByRole('button', { name }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+    };
+
+    it('uses English defaults, counting only real items (not separators)', async () => {
+      const { container } = render(<DockBar items={threeLevels()} />);
+      expect(
+        screen.getByRole('button', { name: 'Ajustes, opens 2 more options' }),
+      ).toBeInTheDocument();
+
+      await drill(container, /Ajustes/);
+      expect(liveRegion()).toHaveTextContent('Ajustes, level 2');
+      expect(screen.getByRole('button', { name: 'Red, opens 1 more option' })).toBeInTheDocument();
+
+      await drill(container, /Red/);
+      expect(screen.getByRole('button', { name: 'Back to Ajustes' })).toBeInTheDocument();
+
+      await drill(container, /Back to Ajustes/);
+      expect(liveRegion()).toHaveTextContent('Back to Ajustes');
+      await drill(container, /^Back$/);
+      expect(liveRegion()).toHaveTextContent('Back to main menu');
+    });
+
+    it('uses the provided label builders for every screen-reader text', async () => {
+      const { container } = render(
+        <DockBar
+          items={threeLevels()}
+          labels={spanish}
+          ariaLabel="Menú"
+          backItem={{ label: 'Atrás' }}
+        />,
+      );
+      expect(screen.getByRole('toolbar', { name: 'Menú' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ajustes, abre 2 opciones' })).toBeInTheDocument();
+
+      await drill(container, /Ajustes/);
+      expect(liveRegion()).toHaveTextContent('Ajustes, nivel 2');
+      expect(screen.getByRole('button', { name: 'Atrás' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Red, abre 1 opción' })).toBeInTheDocument();
+
+      await drill(container, /Red/);
+      expect(screen.getByRole('button', { name: 'Volver a Ajustes' })).toBeInTheDocument();
+
+      await drill(container, /Volver a Ajustes/);
+      expect(liveRegion()).toHaveTextContent('De vuelta en Ajustes');
+      await drill(container, /^Atrás$/);
+      expect(liveRegion()).toHaveTextContent('De vuelta en el menú principal');
+    });
+
+    it('falls back to English for builders that are not provided', () => {
+      render(<DockBar items={threeLevels()} labels={{ backTo: spanish.backTo }} />);
+      expect(
+        screen.getByRole('button', { name: 'Ajustes, opens 2 more options' }),
+      ).toBeInTheDocument();
+    });
+
+    it('lets an item aria-label override the generated parent label', () => {
+      const items = threeLevels();
+      items[1] = { ...(items[1] as DockBarItem), 'aria-label': 'Preferencias del sistema' };
+      render(<DockBar items={items} labels={spanish} />);
+      expect(screen.getByRole('button', { name: 'Preferencias del sistema' })).toBeInTheDocument();
+    });
+  });
+
   describe('back bubble', () => {
     const getBackArea = (container: HTMLElement) =>
       container.querySelector<HTMLElement>('[data-dockbar-part="back-area"]');

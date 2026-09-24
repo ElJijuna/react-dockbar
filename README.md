@@ -55,7 +55,28 @@ function AppMenuBar() {
   in `src/theme/tokens.css`.
 - **Accessibility**: renders as a `role="toolbar"` of native `<button>`/`<a>` elements, moves
   focus to/from the Back button on navigation, announces level changes via a live region, and
-  respects `prefers-reduced-motion` (or force it via the `reducedMotion` prop).
+  respects `prefers-reduced-motion` (or force it via the `reducedMotion` prop). Keyboard follows
+  the WAI-ARIA toolbar pattern: a single Tab stop, arrow keys (↑/↓ when vertical) to move,
+  Home/End, and `Escape` to go back.
+
+## Translating screen-reader texts
+
+The dock name and the Back label are props; the dynamic texts are builder functions, so each
+language controls its own grammar and plurals. Any builder you omit falls back to English.
+
+```tsx
+<DockBar
+  items={items}
+  ariaLabel="Barra de herramientas"
+  backItem={{ label: 'Atrás' }}
+  labels={{
+    parentItem: (label, count) => `${label}, abre ${count} ${count === 1 ? 'opción' : 'opciones'}`,
+    backTo: (label) => `Volver a ${label}`,
+    enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
+    returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+  }}
+/>
+```
 
 ## Development
 

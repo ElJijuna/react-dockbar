@@ -186,3 +186,21 @@ export const PillToolbar: Story = {
     ariaLabel: 'Toolbar',
   },
 };
+
+/** Screen-reader texts translated to Spanish via `ariaLabel`, `backItem.label` and `labels`. */
+export const SpanishLabels: Story = {
+  args: {
+    items: pillItems,
+    variant: 'pill',
+    magnification: { scale: 1.25, distance: 90 },
+    ariaLabel: 'Barra de herramientas',
+    backItem: { label: 'Atrás' },
+    labels: {
+      parentItem: (label, count) =>
+        `${label}, abre ${count} ${count === 1 ? 'opción' : 'opciones'}`,
+      backTo: (label) => `Volver a ${label}`,
+      enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
+      returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+    },
+  },
+};

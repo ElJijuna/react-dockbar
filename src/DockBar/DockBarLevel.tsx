@@ -5,6 +5,7 @@ import { useMagnify } from '../hooks/useMagnify';
 import type {
   DockBarEntry,
   DockBarItem,
+  DockBarLabels,
   DockBarMagnificationConfig,
   DockBarOrientation,
   DockBarProps,
@@ -24,6 +25,7 @@ export interface DockBarLevelProps {
   activePathIds: string[];
   /** Id of the single item reachable with Tab (roving tabindex). */
   tabStopId: string | null;
+  parentItemLabel: Required<DockBarLabels>['parentItem'];
   itemClassName?: DockBarProps['itemClassName'];
   onActivate: (
     item: DockBarItem,
@@ -44,6 +46,7 @@ export const DockBarLevel = ({
   magnification,
   activePathIds,
   tabStopId,
+  parentItemLabel,
   itemClassName,
   onActivate,
   onAnimationEnd,
@@ -111,6 +114,7 @@ export const DockBarLevel = ({
             item={item}
             isBack={false}
             tabIndex={item.id === tabStopId ? 0 : -1}
+            parentItemLabel={parentItemLabel}
             scale={getScale(index)}
             hovered={hoveredIndex === index}
             active={item.id === activeId}

@@ -59,6 +59,22 @@ export interface DockBarMagnificationConfig {
   transitionMs?: number;
 }
 
+/**
+ * Builders for the dynamic, screen-reader-facing texts. Functions (not templates) so each
+ * language can handle its own grammar and plurals. The dock name and the Back label are set
+ * with the `ariaLabel` and `backItem.label` props.
+ */
+export interface DockBarLabels {
+  /** Accessible name of an item that opens a submenu. Default: "Settings, opens 3 more options". */
+  parentItem?: (label: string, childCount: number) => string;
+  /** Accessible name of Back when it returns to a named parent. Default: "Back to Settings". */
+  backTo?: (parentLabel: string) => string;
+  /** Announced after entering a submenu; `depth` is 1 for the first nested level. Default: "Settings, level 2". */
+  enteredLevel?: (label: string, depth: number) => string;
+  /** Announced after going back; `label` is null when returning to the root. Default: "Back to Settings" / "Back to main menu". */
+  returnedTo?: (label: string | null) => string;
+}
+
 export interface DockBarItemState {
   hovered: boolean;
   isBack: boolean;
@@ -89,6 +105,8 @@ export interface DockBarProps {
   backItem?: Partial<Pick<DockBarItem, 'label' | 'icon'>>;
   onNavigate?: (event: DockBarNavigateEvent) => void;
   ariaLabel?: string;
+  /** Translatable screen-reader texts; any omitted builder falls back to English. */
+  labels?: DockBarLabels;
   className?: string;
   style?: CSSProperties;
   itemClassName?: string | ((item: DockBarItem, state: DockBarItemState) => string | undefined);

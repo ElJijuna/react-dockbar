@@ -7,6 +7,7 @@ export type {
   DockBarEntry,
   DockBarItem,
   DockBarItemState,
+  DockBarLabels,
   DockBarMagnificationConfig,
   DockBarNavigateEvent,
   DockBarOrientation,

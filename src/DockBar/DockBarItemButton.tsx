@@ -1,5 +1,7 @@
 import type { CSSProperties, FocusEvent, KeyboardEvent, MouseEvent, ReactElement } from 'react';
-import type { DockBarItem, DockBarItemState, DockBarProps } from '../types';
+import { DEFAULT_LABELS } from '../constants';
+import type { DockBarItem, DockBarItemState, DockBarLabels, DockBarProps } from '../types';
+import { isSeparator } from '../utils/isSeparator';
 import styles from './DockBarItemButton.module.css';
 
 export interface DockBarItemButtonProps {
@@ -8,6 +10,8 @@ export interface DockBarItemButtonProps {
   /** Roving tabindex: 0 for the dock's single tab stop, -1 otherwise. */
   tabIndex: number;
   ariaLabel?: string;
+  /** Builds the accessible name of items that open a submenu. */
+  parentItemLabel?: Required<DockBarLabels>['parentItem'];
   scale: number;
   hovered: boolean;
   active: boolean;
@@ -27,6 +31,7 @@ export const DockBarItemButton = ({
   isBack,
   tabIndex,
   ariaLabel,
+  parentItemLabel = DEFAULT_LABELS.parentItem,
   scale,
   hovered,
   active,
@@ -39,10 +44,11 @@ export const DockBarItemButton = ({
 }: DockBarItemButtonProps): ReactElement => {
   const isParent = !isBack && Boolean(item.children?.length);
   const state: DockBarItemState = { hovered, isBack, active, containsActive };
+  const childCount = item.children?.filter((entry) => !isSeparator(entry)).length ?? 0;
   const resolvedAriaLabel =
     ariaLabel ??
     item['aria-label'] ??
-    (isParent ? `${item.label}, opens ${item.children?.length} more options` : item.label);
+    (isParent ? parentItemLabel(item.label, childCount) : item.label);
   const extraClassName =
     typeof itemClassName === 'function' ? itemClassName(item, state) : itemClassName;
   const className = [styles.item, isParent && styles.parent, isBack && styles.back, extraClassName]

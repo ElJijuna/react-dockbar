@@ -12,6 +12,7 @@ import {
   DEFAULT_ANIMATION_DURATION_MS,
   DEFAULT_ARIA_LABEL,
   DEFAULT_BACK_LABEL,
+  DEFAULT_LABELS,
   DOCKBAR_BACK_ID,
 } from '../constants';
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
@@ -39,6 +40,7 @@ export const DockBar = ({
   backItem,
   onNavigate,
   ariaLabel = DEFAULT_ARIA_LABEL,
+  labels,
   className,
   style,
   itemClassName,
@@ -67,19 +69,19 @@ export const DockBar = ({
     [backItem?.label, backItem?.icon],
   );
 
+  const resolvedLabels = useMemo(() => ({ ...DEFAULT_LABELS, ...labels }), [labels]);
+
   const handleNavigate = useCallback(
     (event: DockBarNavigateEvent) => {
-      const destinationLabel = event.path[event.path.length - 1]?.label;
+      const destinationLabel = event.path[event.path.length - 1]?.label ?? null;
       setLiveMessage(
-        event.direction === 'forward'
-          ? `${destinationLabel}, level ${event.depth + 1}`
-          : destinationLabel
-            ? `Back to ${destinationLabel}`
-            : 'Back to main menu',
+        event.direction === 'forward' && destinationLabel
+          ? resolvedLabels.enteredLevel(destinationLabel, event.depth)
+          : resolvedLabels.returnedTo(destinationLabel),
       );
       onNavigate?.(event);
     },
-    [onNavigate],
+    [onNavigate, resolvedLabels],
   );
 
   const {
@@ -164,7 +166,9 @@ export const DockBar = ({
   );
 
   const grandparent = breadcrumb[breadcrumb.length - 2];
-  const backAriaLabel = grandparent ? `Back to ${grandparent.label}` : resolvedBackItem.label;
+  const backAriaLabel = grandparent
+    ? resolvedLabels.backTo(grandparent.label)
+    : resolvedBackItem.label;
   // Fade the Back bubble out together with the last collapse back to the root level.
   const backLeaving = depth === 1 && direction === 'back' && phase === 'collapsing';
 
@@ -207,6 +211,7 @@ export const DockBar = ({
         magnification={magnification}
         activePathIds={activePathIds}
         tabStopId={roving.tabStopId}
+        parentItemLabel={resolvedLabels.parentItem}
         itemClassName={itemClassName}
         onActivate={handleActivate}
         onAnimationEnd={handleLevelAnimationEnd}
