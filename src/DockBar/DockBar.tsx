@@ -18,6 +18,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
 import styles from './DockBar.module.css';
+import { DockBarBackButton } from './DockBarBackButton';
 import { DockBarLevel } from './DockBarLevel';
 import { ChevronLeftIcon } from './icons';
 
@@ -90,7 +91,6 @@ export const DockBar = ({
     navigateBack,
     handleLevelAnimationEnd,
   } = useDockBarNavigation(items, {
-    backItem: resolvedBackItem,
     animationDuration,
     instant,
     onNavigate: handleNavigate,
@@ -138,13 +138,10 @@ export const DockBar = ({
     [depth, phase, navigateBack],
   );
 
-  const backAriaLabel = useMemo(() => {
-    if (depth === 0) {
-      return undefined;
-    }
-    const grandparent = breadcrumb[breadcrumb.length - 2];
-    return grandparent ? `Back to ${grandparent.label}` : resolvedBackItem.label;
-  }, [depth, breadcrumb, resolvedBackItem.label]);
+  const grandparent = breadcrumb[breadcrumb.length - 2];
+  const backAriaLabel = grandparent ? `Back to ${grandparent.label}` : resolvedBackItem.label;
+  // Fade the Back bubble out together with the last collapse back to the root level.
+  const backLeaving = depth === 1 && direction === 'back' && phase === 'collapsing';
 
   const rootClassName = [styles.dockbar, styles[`size-${size}`], className]
     .filter(Boolean)
@@ -163,6 +160,16 @@ export const DockBar = ({
       style={style}
       onKeyDown={handleKeyDown}
     >
+      {depth > 0 ? (
+        <DockBarBackButton
+          item={resolvedBackItem}
+          ariaLabel={backAriaLabel}
+          leaving={backLeaving}
+          animationDuration={animationDuration}
+          itemClassName={itemClassName}
+          onActivate={handleActivate}
+        />
+      ) : null}
       <DockBarLevel
         key={depth}
         items={levelItems}
@@ -171,7 +178,6 @@ export const DockBar = ({
         orientation={orientation}
         animationDuration={animationDuration}
         magnification={magnification}
-        backAriaLabel={backAriaLabel}
         activePathIds={activePathIds}
         itemClassName={itemClassName}
         onActivate={handleActivate}

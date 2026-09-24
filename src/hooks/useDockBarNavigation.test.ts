@@ -3,8 +3,6 @@ import { DOCKBAR_BACK_ID } from '../constants';
 import type { DockBarItem } from '../types';
 import { useDockBarNavigation } from './useDockBarNavigation';
 
-const backItem: DockBarItem = { id: DOCKBAR_BACK_ID, label: 'Back', icon: null };
-
 const settingsChildren: DockBarItem[] = [
   { id: 'wifi', label: 'Wi-Fi', icon: null },
   { id: 'bluetooth', label: 'Bluetooth', icon: null },
@@ -21,7 +19,7 @@ const bubbledAnimationEnd = { target: {}, currentTarget: sameTarget };
 
 function renderNav(overrides?: Partial<Parameters<typeof useDockBarNavigation>[1]>) {
   return renderHook((items: DockBarItem[] = rootItems) =>
-    useDockBarNavigation(items, { backItem, ...overrides }),
+    useDockBarNavigation(items, { ...overrides }),
   );
 }
 
@@ -47,7 +45,7 @@ describe('useDockBarNavigation', () => {
     act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
     expect(result.current.phase).toBe('expanding');
     expect(result.current.depth).toBe(1);
-    expect(result.current.levelItems).toEqual([backItem, ...settingsChildren]);
+    expect(result.current.levelItems).toEqual(settingsChildren);
 
     act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
     expect(result.current.phase).toBe('idle');
@@ -96,7 +94,7 @@ describe('useDockBarNavigation', () => {
 
     expect(result.current.phase).toBe('idle');
     expect(result.current.depth).toBe(1);
-    expect(result.current.levelItems).toEqual([backItem, ...settingsChildren]);
+    expect(result.current.levelItems).toEqual(settingsChildren);
   });
 
   it('resolves navigation synchronously when animationDuration is 0', () => {

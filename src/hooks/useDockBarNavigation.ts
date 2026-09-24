@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { DEFAULT_ANIMATION_DURATION_MS, DOCKBAR_BACK_ID } from '../constants';
 import type { DockBarEntry, DockBarItem, DockBarNavigateEvent } from '../types';
 
@@ -104,7 +104,6 @@ function reducer(state: NavState, action: NavAction): NavState {
 }
 
 export interface UseDockBarNavigationOptions {
-  backItem: DockBarItem;
   animationDuration?: number;
   /** Skip waiting for CSS transitions entirely and resolve navigation synchronously. */
   instant?: boolean;
@@ -130,7 +129,6 @@ export interface UseDockBarNavigationResult {
 export function useDockBarNavigation(
   rootItems: DockBarEntry[],
   {
-    backItem,
     animationDuration = DEFAULT_ANIMATION_DURATION_MS,
     instant = false,
     onNavigate,
@@ -211,11 +209,7 @@ export function useDockBarNavigation(
   );
 
   const depth = state.stack.length - 1;
-  const rawLevel = state.stack[state.stack.length - 1];
-  const levelItems = useMemo(
-    () => (depth > 0 ? [backItem, ...rawLevel] : rawLevel),
-    [depth, rawLevel, backItem],
-  );
+  const levelItems = state.stack[state.stack.length - 1];
 
   return {
     levelItems,

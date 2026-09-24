@@ -249,6 +249,68 @@ describe('DockBar', () => {
     expect(screen.queryByRole('button', { name: /Back/ })).not.toBeInTheDocument();
   });
 
+  describe('back bubble', () => {
+    const getBackArea = (container: HTMLElement) =>
+      container.querySelector<HTMLElement>('[data-dockbar-part="back-area"]');
+
+    it('renders Back in its own area beside the dock, not inside the level', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={nestedItems()} />);
+      expect(getBackArea(container)).toBeNull();
+
+      await user.click(screen.getByRole('button', { name: /Settings/ }));
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      const backArea = getBackArea(container);
+      const back = screen.getByRole('button', { name: 'Back' });
+      expect(backArea).toContainElement(back);
+      expect(getLevel(container)).not.toContainElement(back);
+      expect(backArea?.nextElementSibling).toBe(getLevel(container));
+    });
+
+    it('stays mounted between nested levels and animates out on the last collapse to root', async () => {
+      const user = userEvent.setup();
+      const items: DockBarEntry[] = [
+        {
+          id: 'settings',
+          label: 'Settings',
+          icon: <span>S</span>,
+          children: [
+            {
+              id: 'network',
+              label: 'Network',
+              icon: <span>N</span>,
+              children: [{ id: 'vpn', label: 'VPN', icon: <span>V</span> }],
+            },
+          ],
+        },
+      ];
+      const { container } = render(<DockBar items={items} />);
+      const drillInto = async (name: RegExp) => {
+        await user.click(screen.getByRole('button', { name }));
+        endLevelTransition(container);
+        endLevelTransition(container);
+      };
+
+      await drillInto(/Settings/);
+      const firstBackArea = getBackArea(container);
+      await drillInto(/Network/);
+      expect(getBackArea(container)).toBe(firstBackArea);
+      expect(screen.getByRole('button', { name: 'Back to Settings' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Back to Settings' }));
+      expect(getBackArea(container)).not.toHaveAttribute('data-dockbar-leaving');
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      await user.click(screen.getByRole('button', { name: 'Back' }));
+      expect(getBackArea(container)).toHaveAttribute('data-dockbar-leaving');
+      endLevelTransition(container);
+      expect(getBackArea(container)).toBeNull();
+    });
+  });
+
   describe('separators', () => {
     const groupedItems = (): DockBarEntry[] => [
       { id: 'finder', label: 'Finder', icon: <span>F</span> },

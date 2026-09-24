@@ -118,6 +118,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-dockbar-part="level"],
+  [data-dockbar-part="back-area"],
   [data-dockbar-part="item"] {
     /* biome-ignore lint/complexity/noImportantStyles: must win over any consumer override for this accessibility safety net */
     transition-duration: 0.01ms !important;

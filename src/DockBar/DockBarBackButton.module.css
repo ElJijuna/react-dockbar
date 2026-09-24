@@ -1,0 +1,75 @@
+.backArea {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: var(--dockbar-item-size);
+  height: var(--dockbar-item-size);
+  padding: var(--dockbar-padding);
+  border-radius: 50%;
+  background: var(--dockbar-bg);
+  backdrop-filter: blur(var(--dockbar-blur));
+  -webkit-backdrop-filter: blur(var(--dockbar-blur));
+  border: 1px solid var(--dockbar-border-color);
+  box-shadow: var(--dockbar-shadow);
+  animation: dockbar-back-in var(--dockbar-transition-duration, 260ms)
+    var(--dockbar-transition-easing) both;
+}
+
+.backArea[data-dockbar-leaving] {
+  animation-name: dockbar-back-out;
+  pointer-events: none;
+}
+
+@keyframes dockbar-back-in {
+  from {
+    opacity: 0;
+    transform: translateX(40%) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dockbar-back-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(40%) scale(0.4);
+  }
+}
+
+[data-dockbar-orientation="vertical"] .backArea {
+  animation-name: dockbar-back-in-vertical;
+}
+
+[data-dockbar-orientation="vertical"] .backArea[data-dockbar-leaving] {
+  animation-name: dockbar-back-out-vertical;
+}
+
+@keyframes dockbar-back-in-vertical {
+  from {
+    opacity: 0;
+    transform: translateY(40%) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dockbar-back-out-vertical {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(40%) scale(0.4);
+  }
+}

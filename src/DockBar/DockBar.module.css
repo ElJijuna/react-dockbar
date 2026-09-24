@@ -1,7 +1,13 @@
 .dockbar {
   display: inline-flex;
+  align-items: center;
+  gap: var(--dockbar-back-gap, 10px);
   box-sizing: border-box;
   font-family: var(--dockbar-font-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+}
+
+.dockbar[data-dockbar-orientation="vertical"] {
+  flex-direction: column;
 }
 
 .dockbar * {

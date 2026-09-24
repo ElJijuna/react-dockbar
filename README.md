@@ -40,8 +40,9 @@ function AppMenuBar() {
 
 - **Flat items**: leaf items call `onSelect({ item, path, nativeEvent })` when activated.
 - **Nested items**: clicking an item with `children` shrinks the current level toward the
-  center, then expands into that item's children with a "Back" item automatically prepended.
-  Clicking Back (or pressing `Escape`) reverses the animation back up one level.
+  center, then expands into that item's children. A circular Back button appears in its own
+  bubble to the left of the dock (above it when vertical); clicking it (or pressing `Escape`)
+  reverses the animation back up one level. Spacing is tunable via `--dockbar-back-gap`.
 - **Active item**: pass `activeId` (controlled, e.g. from your router) or `defaultActiveId`
   (uncontrolled; activating a leaf makes it active). The active item gets a dot indicator and
   `aria-current`; parents containing a nested active item get a dimmer dot.

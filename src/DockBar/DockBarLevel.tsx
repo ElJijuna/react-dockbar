@@ -1,6 +1,5 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactElement } from 'react';
 import { useCallback, useRef } from 'react';
-import { DOCKBAR_BACK_ID } from '../constants';
 import type { DockBarAnimationPhase, DockBarNavDirection } from '../hooks/useDockBarNavigation';
 import { useMagnify } from '../hooks/useMagnify';
 import type {
@@ -21,7 +20,6 @@ export interface DockBarLevelProps {
   orientation: DockBarOrientation;
   animationDuration: number;
   magnification: boolean | DockBarMagnificationConfig | undefined;
-  backAriaLabel?: string;
   /** Root-first ids of the active item and its ancestors. */
   activePathIds: string[];
   itemClassName?: DockBarProps['itemClassName'];
@@ -42,7 +40,6 @@ export const DockBarLevel = ({
   orientation,
   animationDuration,
   magnification,
-  backAriaLabel,
   activePathIds,
   itemClassName,
   onActivate,
@@ -105,17 +102,15 @@ export const DockBarLevel = ({
         // Magnification indexes only real items, matching the queried item elements.
         itemIndex += 1;
         const index = itemIndex;
-        const isBack = item.id === DOCKBAR_BACK_ID;
         return (
           <DockBarItemButton
             key={item.id}
             item={item}
-            isBack={isBack}
-            ariaLabel={isBack ? backAriaLabel : undefined}
+            isBack={false}
             scale={getScale(index)}
             hovered={hoveredIndex === index}
-            active={!isBack && item.id === activeId}
-            containsActive={!isBack && item.id !== activeId && activePathIds.includes(item.id)}
+            active={item.id === activeId}
+            containsActive={item.id !== activeId && activePathIds.includes(item.id)}
             magnifyTransitionMs={transitionMs}
             onFocusItem={handleItemFocus}
             onBlurItem={reset}
