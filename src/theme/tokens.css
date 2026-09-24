@@ -1,0 +1,71 @@
+:root {
+  --dockbar-radius: 20px;
+  --dockbar-item-size: 52px;
+  --dockbar-item-radius: 14px;
+  --dockbar-gap: 8px;
+  --dockbar-padding: 10px;
+  --dockbar-transition-duration: 260ms;
+  --dockbar-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --dockbar-magnify-scale: 1.4;
+  --dockbar-magnify-transition: 120ms;
+}
+
+[data-dockbar-color-scheme="light"],
+[data-dockbar-color-scheme="auto"] {
+  --dockbar-bg: rgba(255, 255, 255, 0.55);
+  --dockbar-border-color: rgba(255, 255, 255, 0.4);
+  --dockbar-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --dockbar-blur: 20px;
+  --dockbar-fg: #1c1c1e;
+  --dockbar-fg-muted: rgba(28, 28, 30, 0.6);
+  --dockbar-accent: #0a84ff;
+  --dockbar-item-bg-hover: rgba(0, 0, 0, 0.06);
+}
+
+[data-dockbar-color-scheme="dark"] {
+  --dockbar-bg: rgba(30, 30, 32, 0.55);
+  --dockbar-border-color: rgba(255, 255, 255, 0.12);
+  --dockbar-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --dockbar-blur: 20px;
+  --dockbar-fg: #f5f5f7;
+  --dockbar-fg-muted: rgba(245, 245, 247, 0.6);
+  --dockbar-accent: #409cff;
+  --dockbar-item-bg-hover: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-dockbar-color-scheme="auto"] {
+    --dockbar-bg: rgba(30, 30, 32, 0.55);
+    --dockbar-border-color: rgba(255, 255, 255, 0.12);
+    --dockbar-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --dockbar-fg: #f5f5f7;
+    --dockbar-fg-muted: rgba(245, 245, 247, 0.6);
+    --dockbar-accent: #409cff;
+    --dockbar-item-bg-hover: rgba(255, 255, 255, 0.1);
+  }
+}
+
+[data-dockbar-variant="solid"] {
+  --dockbar-blur: 0px;
+  --dockbar-bg: #ffffff;
+}
+
+[data-dockbar-variant="solid"][data-dockbar-color-scheme="dark"] {
+  --dockbar-bg: #1c1c1e;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-dockbar-variant="solid"][data-dockbar-color-scheme="auto"] {
+    --dockbar-bg: #1c1c1e;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-dockbar-part="level"],
+  [data-dockbar-part="item"] {
+    /* biome-ignore lint/complexity/noImportantStyles: must win over any consumer override for this accessibility safety net */
+    transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win over any consumer override for this accessibility safety net */
+    animation-duration: 0.01ms !important;
+  }
+}

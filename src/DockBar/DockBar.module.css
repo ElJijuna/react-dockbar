@@ -1,0 +1,36 @@
+.dockbar {
+  display: inline-flex;
+  box-sizing: border-box;
+}
+
+.dockbar * {
+  box-sizing: border-box;
+}
+
+.size-sm {
+  --dockbar-item-size: 40px;
+  --dockbar-radius: 16px;
+  --dockbar-item-radius: 11px;
+}
+
+.size-md {
+  --dockbar-item-size: 52px;
+}
+
+.size-lg {
+  --dockbar-item-size: 64px;
+  --dockbar-radius: 24px;
+  --dockbar-item-radius: 17px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

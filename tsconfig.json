@@ -1,0 +1,9 @@
+{
+    "extends": "super-configs/tsconfig/react",
+    "compilerOptions": {
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "types": ["vite/client", "jest", "@testing-library/jest-dom"],
+        "isolatedModules": true
+    },
+    "include": ["src"]
+}

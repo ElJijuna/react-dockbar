@@ -1,0 +1,85 @@
+{
+    "name": "react-dockbar",
+    "version": "0.1.0",
+    "description": "A macOS-Dock-style, animated, drill-down app bar for React 18/19, with glass light/dark themes.",
+    "license": "MIT",
+    "author": "pilmee <pilmee@gmail.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ElJijuna/react-dockbar.git"
+    },
+    "keywords": [
+        "react",
+        "dock",
+        "dockbar",
+        "menu",
+        "macos",
+        "navigation",
+        "glassmorphism"
+    ],
+    "type": "module",
+    "sideEffects": [
+        "**/*.css"
+    ],
+    "main": "./dist/react-dockbar.cjs",
+    "module": "./dist/react-dockbar.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/react-dockbar.js",
+            "require": "./dist/react-dockbar.cjs"
+        },
+        "./style.css": "./dist/style.css",
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0",
+        "react-dom": "^18.0.0 || ^19.0.0"
+    },
+    "scripts": {
+        "dev": "storybook dev -p 6006",
+        "build": "tsc -p tsconfig.build.json --noEmit && vite build",
+        "build:storybook": "storybook build",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "lint": "eslint . && biome check .",
+        "lint:fix": "eslint . --fix && biome check --write .",
+        "format": "biome format --write .",
+        "typecheck": "tsc -p tsconfig.build.json --noEmit",
+        "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.13",
+        "@storybook/addon-a11y": "^10.6.0",
+        "@storybook/react-vite": "^10.6.0",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/react": "^16.3.3",
+        "@testing-library/user-event": "^14.6.7",
+        "@types/jest": "^30.0.0",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.1.1",
+        "eslint": "^10.11.0",
+        "identity-obj-proxy": "^3.0.0",
+        "jest": "^30.5.2",
+        "jest-environment-jsdom": "^30.5.2",
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0",
+        "storybook": "^10.6.0",
+        "super-configs": "^1.25.1",
+        "ts-jest": "^29.4.13",
+        "typescript": "^6.0.2",
+        "vite": "^8.3.1",
+        "vite-plugin-dts": "^5.1.1"
+    }
+}
