@@ -16,12 +16,15 @@ import {
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
+import { findItemPath } from '../utils/findItemPath';
 import styles from './DockBar.module.css';
 import { DockBarLevel } from './DockBarLevel';
 import { ChevronLeftIcon } from './icons';
 
 export const DockBar = ({
   items,
+  activeId: activeIdProp,
+  defaultActiveId = null,
   colorScheme = 'auto',
   variant = 'glass',
   size = 'md',
@@ -39,6 +42,14 @@ export const DockBar = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevPhaseRef = useRef<'idle' | 'collapsing' | 'expanding'>('idle');
   const [liveMessage, setLiveMessage] = useState('');
+  const [uncontrolledActiveId, setUncontrolledActiveId] = useState(defaultActiveId);
+  const isActiveControlled = activeIdProp !== undefined;
+  const activeId = isActiveControlled ? activeIdProp : uncontrolledActiveId;
+
+  const activePathIds = useMemo(
+    () => (activeId ? findItemPath(items, activeId).map((item) => item.id) : []),
+    [items, activeId],
+  );
 
   const osReducedMotion = useReducedMotion();
   const instant =
@@ -109,9 +120,12 @@ export const DockBar = ({
         navigateTo(item);
         return;
       }
+      if (!isActiveControlled) {
+        setUncontrolledActiveId(item.id);
+      }
       item.onSelect?.({ item, path: breadcrumb, nativeEvent: event.nativeEvent });
     },
-    [navigateTo, navigateBack, breadcrumb],
+    [navigateTo, navigateBack, breadcrumb, isActiveControlled],
   );
 
   const handleKeyDown = useCallback(
@@ -158,6 +172,7 @@ export const DockBar = ({
         animationDuration={animationDuration}
         magnification={magnification}
         backAriaLabel={backAriaLabel}
+        activePathIds={activePathIds}
         itemClassName={itemClassName}
         onActivate={handleActivate}
         onAnimationEnd={handleLevelAnimationEnd}

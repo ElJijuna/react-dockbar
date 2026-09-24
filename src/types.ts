@@ -48,10 +48,21 @@ export interface DockBarMagnificationConfig {
 export interface DockBarItemState {
   hovered: boolean;
   isBack: boolean;
+  /** This item is the active one. */
+  active: boolean;
+  /** The active item is nested somewhere inside this item's children. */
+  containsActive: boolean;
 }
 
 export interface DockBarProps {
   items: DockBarItem[];
+  /**
+   * Id of the active item (controlled). Parents of a nested active item are marked too.
+   * Pass `null` for no active item.
+   */
+  activeId?: string | null;
+  /** Initial active id when uncontrolled; activating a leaf item then makes it active. */
+  defaultActiveId?: string | null;
   colorScheme?: DockBarColorScheme;
   variant?: DockBarVariant;
   size?: DockBarSize;

@@ -109,6 +109,30 @@
   pointer-events: none;
 }
 
+.item[data-dockbar-active]::after {
+  content: "";
+  position: absolute;
+  bottom: calc(var(--dockbar-padding) * -0.5 - 2px);
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dockbar-active-indicator, var(--dockbar-accent));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.item[data-dockbar-active="ancestor"]::after {
+  background: var(--dockbar-fg-muted);
+}
+
+[data-dockbar-orientation="vertical"] .item[data-dockbar-active]::after {
+  bottom: auto;
+  top: 50%;
+  left: calc(var(--dockbar-padding) * -0.5 - 2px);
+  transform: translateY(-50%);
+}
+
 .back .icon {
   color: var(--dockbar-accent);
 }

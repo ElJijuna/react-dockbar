@@ -42,6 +42,9 @@ function AppMenuBar() {
 - **Nested items**: clicking an item with `children` shrinks the current level toward the
   center, then expands into that item's children with a "Back" item automatically prepended.
   Clicking Back (or pressing `Escape`) reverses the animation back up one level.
+- **Active item**: pass `activeId` (controlled, e.g. from your router) or `defaultActiveId`
+  (uncontrolled; activating a leaf makes it active). The active item gets a dot indicator and
+  `aria-current`; parents containing a nested active item get a dimmer dot.
 - **Hover magnification**: items scale up under the pointer, tapering off for nearby
   neighbors, matching macOS Dock behavior. Tune or disable via the `magnification` prop.
 - **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid'`)

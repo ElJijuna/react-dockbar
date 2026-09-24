@@ -248,4 +248,68 @@ describe('DockBar', () => {
     expect(screen.getByRole('button', { name: 'Finder' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Back/ })).not.toBeInTheDocument();
   });
+
+  describe('active item', () => {
+    it('marks the controlled activeId with aria-current and the active indicator', () => {
+      render(<DockBar items={flatItems()} activeId="mail" />);
+
+      const mail = screen.getByRole('button', { name: 'Mail' });
+      expect(mail).toHaveAttribute('aria-current', 'true');
+      expect(mail).toHaveAttribute('data-dockbar-active', 'self');
+      expect(screen.getByRole('button', { name: 'Finder' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('marks the parent of a nested active item, then the item itself once drilled in', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<DockBar items={nestedItems()} activeId="bluetooth" />);
+
+      const settings = screen.getByRole('button', { name: /Settings/ });
+      expect(settings).toHaveAttribute('data-dockbar-active', 'ancestor');
+      expect(settings).not.toHaveAttribute('aria-current');
+
+      await user.click(settings);
+      endLevelTransition(container);
+      endLevelTransition(container);
+
+      expect(screen.getByRole('button', { name: 'Bluetooth' })).toHaveAttribute(
+        'data-dockbar-active',
+        'self',
+      );
+      expect(screen.getByRole('button', { name: 'Back' })).not.toHaveAttribute(
+        'data-dockbar-active',
+      );
+    });
+
+    it('does not change the active item on click when controlled', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={flatItems()} activeId="mail" />);
+
+      await user.click(screen.getByRole('button', { name: 'Photos' }));
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('aria-current');
+      expect(screen.getByRole('button', { name: 'Photos' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('moves the active item to the selected leaf when uncontrolled', async () => {
+      const user = userEvent.setup();
+      render(<DockBar items={flatItems()} defaultActiveId="finder" />);
+      expect(screen.getByRole('button', { name: 'Finder' })).toHaveAttribute('aria-current');
+
+      await user.click(screen.getByRole('button', { name: 'Photos' }));
+      expect(screen.getByRole('button', { name: 'Photos' })).toHaveAttribute('aria-current');
+      expect(screen.getByRole('button', { name: 'Finder' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('exposes active state to itemClassName', () => {
+      render(
+        <DockBar
+          items={nestedItems()}
+          activeId="wifi"
+          itemClassName={(_item, state) =>
+            state.active ? 'is-active' : state.containsActive ? 'has-active' : undefined
+          }
+        />,
+      );
+      expect(screen.getByRole('button', { name: /Settings/ })).toHaveClass('has-active');
+    });
+  });
 });

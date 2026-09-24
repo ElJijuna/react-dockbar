@@ -20,6 +20,8 @@ export interface DockBarLevelProps {
   animationDuration: number;
   magnification: boolean | DockBarMagnificationConfig | undefined;
   backAriaLabel?: string;
+  /** Root-first ids of the active item and its ancestors. */
+  activePathIds: string[];
   itemClassName?: DockBarProps['itemClassName'];
   onActivate: (
     item: DockBarItem,
@@ -39,10 +41,12 @@ export const DockBarLevel = ({
   animationDuration,
   magnification,
   backAriaLabel,
+  activePathIds,
   itemClassName,
   onActivate,
   onAnimationEnd,
 }: DockBarLevelProps): ReactElement => {
+  const activeId = activePathIds[activePathIds.length - 1];
   const levelRef = useRef<HTMLDivElement>(null);
   const { hoveredIndex, getScale, update, reset, transitionMs } = useMagnify(
     magnification,
@@ -93,6 +97,8 @@ export const DockBarLevel = ({
             ariaLabel={isBack ? backAriaLabel : undefined}
             scale={getScale(index)}
             hovered={hoveredIndex === index}
+            active={!isBack && item.id === activeId}
+            containsActive={!isBack && item.id !== activeId && activePathIds.includes(item.id)}
             magnifyTransitionMs={transitionMs}
             onFocusItem={handleItemFocus}
             onBlurItem={reset}

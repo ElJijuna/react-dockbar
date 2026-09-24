@@ -8,6 +8,8 @@ export interface DockBarItemButtonProps {
   ariaLabel?: string;
   scale: number;
   hovered: boolean;
+  active: boolean;
+  containsActive: boolean;
   magnifyTransitionMs: number;
   onFocusItem: (element: HTMLElement) => void;
   onBlurItem: () => void;
@@ -24,6 +26,8 @@ export const DockBarItemButton = ({
   ariaLabel,
   scale,
   hovered,
+  active,
+  containsActive,
   magnifyTransitionMs,
   onFocusItem,
   onBlurItem,
@@ -31,7 +35,7 @@ export const DockBarItemButton = ({
   itemClassName,
 }: DockBarItemButtonProps): ReactElement => {
   const isParent = !isBack && Boolean(item.children?.length);
-  const state: DockBarItemState = { hovered, isBack };
+  const state: DockBarItemState = { hovered, isBack, active, containsActive };
   const resolvedAriaLabel =
     ariaLabel ??
     item['aria-label'] ??
@@ -84,6 +88,8 @@ export const DockBarItemButton = ({
     'data-dockbar-part': 'item' as const,
     'data-dockbar-item-id': item.id,
     'data-dockbar-hovered': hovered || undefined,
+    'data-dockbar-active': active ? 'self' : containsActive ? 'ancestor' : undefined,
+    'aria-current': active ? (item.href ? ('page' as const) : true) : undefined,
     'aria-label': resolvedAriaLabel,
     onFocus: handleFocus,
     onBlur: onBlurItem,

@@ -46,6 +46,7 @@ const meta: Meta<typeof DockBar> = {
     size: { control: 'radio', options: ['sm', 'md', 'lg'] },
     colorScheme: { control: 'radio', options: ['auto', 'light', 'dark'] },
     animationDuration: { control: { type: 'range', min: 0, max: 800, step: 20 } },
+    activeId: { control: 'text' },
   },
 };
 
@@ -55,6 +56,7 @@ type Story = StoryObj<typeof DockBar>;
 export const FlatDock: Story = {
   args: {
     items: flatItems,
+    defaultActiveId: 'finder',
     ariaLabel: 'App dock',
   },
 };
@@ -62,6 +64,7 @@ export const FlatDock: Story = {
 export const NestedDock: Story = {
   args: {
     items: nestedItems,
+    defaultActiveId: 'vpn',
     ariaLabel: 'App dock',
   },
   play: async ({ canvasElement, step }) => {
