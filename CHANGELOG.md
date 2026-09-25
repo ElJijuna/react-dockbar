@@ -1,3 +1,19 @@
+# [1.3.0](https://github.com/ElJijuna/react-dockbar/compare/v1.2.0...v1.3.0) (2026-09-25)
+
+
+### Bug Fixes
+
+* enhance forced colors support for accessibility in dock bar components ([eee1bb4](https://github.com/ElJijuna/react-dockbar/commit/eee1bb44da5e8eb9d14df0bb6a4c75f0d7ddd82f))
+* mark the bundle as a Client Component for React Server Components ([2eabecc](https://github.com/ElJijuna/react-dockbar/commit/2eabecc8b505e9d304fd31097f5032edd71d1799))
+
+
+### Features
+
+* implement auto-hide functionality for the dock bar with customizable delay ([ad0fb61](https://github.com/ElJijuna/react-dockbar/commit/ad0fb612b43edbb4b5aad65f3b73087f1b5a3171))
+* publish the space the pinned dock takes as CSS variables ([6424fce](https://github.com/ElJijuna/react-dockbar/commit/6424fcedde4589eb0d3618bd3043cc7a3764e79d))
+* update a11y announce item badges to screen readers ([2b6025b](https://github.com/ElJijuna/react-dockbar/commit/2b6025b6edc47285780db90baa46e66fcf5eaa89))
+* update default variant to 'pill' and enhance README with theming details ([5561117](https://github.com/ElJijuna/react-dockbar/commit/556111785547125328a659bf2c3534e54118acc1))
+
 # [1.2.0](https://github.com/ElJijuna/react-dockbar/compare/v1.1.0...v1.2.0) (2026-09-25)
 
 
