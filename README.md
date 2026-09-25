@@ -1,5 +1,25 @@
 # react-dockbar
 
+[![npm version](https://img.shields.io/npm/v/react-dockbar?logo=npm&color=cb3837)](https://www.npmjs.com/package/react-dockbar)
+[![npm downloads](https://img.shields.io/npm/dm/react-dockbar?logo=npm&color=cb3837)](https://www.npmjs.com/package/react-dockbar)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/react-dockbar?label=min%2Bgzip)](https://bundlephobia.com/package/react-dockbar)
+[![CI](https://github.com/ElJijuna/react-dockbar/actions/workflows/ci.yml/badge.svg)](https://github.com/ElJijuna/react-dockbar/actions/workflows/ci.yml)
+[![Release](https://github.com/ElJijuna/react-dockbar/actions/workflows/release.yml/badge.svg)](https://github.com/ElJijuna/react-dockbar/actions/workflows/release.yml)
+[![Storybook](https://img.shields.io/badge/Storybook-live%20demo-ff4785?logo=storybook&logoColor=white)](https://eljijuna.github.io/react-dockbar/)
+[![license](https://img.shields.io/npm/l/react-dockbar)](./LICENSE)
+[![semantic-release](https://img.shields.io/badge/semantic--release-automated-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org)
+
+[![React](https://img.shields.io/badge/React-18%20%7C%2019-61dafb?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)](https://vite.dev)
+[![Jest](https://img.shields.io/badge/Jest-30-c21325?logo=jest&logoColor=white)](https://jestjs.io)
+[![Testing Library](https://img.shields.io/badge/Testing%20Library-React-e33332?logo=testinglibrary&logoColor=white)](https://testing-library.com/docs/react-testing-library/intro/)
+[![Storybook](https://img.shields.io/badge/Storybook-10-ff4785?logo=storybook&logoColor=white)](https://storybook.js.org)
+[![ESLint](https://img.shields.io/badge/ESLint-10-4b32c3?logo=eslint&logoColor=white)](https://eslint.org)
+[![Biome](https://img.shields.io/badge/Biome-2-60a5fa?logo=biome&logoColor=white)](https://biomejs.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A522.13-5fa04e?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+
 A macOS-Dock-style, animated app bar for React 18 and 19: hover magnification, drill-down
 navigation with an auto-inserted Back item, and a glass/translucent theme configurable for
 light and dark.
