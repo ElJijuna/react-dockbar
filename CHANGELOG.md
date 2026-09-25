@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/ElJijuna/react-dockbar/compare/v1.1.0...v1.2.0) (2026-09-25)
+
+
+### Features
+
+* add previews panel for dock bar items ([ab6b871](https://github.com/ElJijuna/react-dockbar/commit/ab6b871df450c9421b4f45afe838a8e988ecfabc))
+* implement dock position prop and update styles for positioning and tooltip behavior ([8500d5d](https://github.com/ElJijuna/react-dockbar/commit/8500d5d5b262abf1d4487f8d810026260dd87597))
+
 # [1.1.0](https://github.com/ElJijuna/react-dockbar/compare/v1.0.0...v1.1.0) (2026-09-24)
 
 
@@ -24,4 +32,3 @@
 * enhance DockBar with improved magnification and tooltip features ([b067b94](https://github.com/ElJijuna/react-dockbar/commit/b067b942a772fb4749ac4f9a539bb450e862780d))
 * implement Back button with animation and styling enhancements ([946ce7c](https://github.com/ElJijuna/react-dockbar/commit/946ce7c9bb02234e0e3d3bcc7a02b1c18423811a))
 * implement DockBar component with navigation and magnification features ([5307ec9](https://github.com/ElJijuna/react-dockbar/commit/5307ec9f033976ea15dcf7790dc0ad9a71115ce4))
-
