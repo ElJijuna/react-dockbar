@@ -111,6 +111,11 @@ export type DockBarPosition =
   | 'inline';
 export type DockBarReducedMotionMode = 'system' | 'always' | 'never';
 
+export interface DockBarAutoHideConfig {
+  /** ms the dock stays after the pointer leaves it and focus moves out. Default 400. */
+  delay?: number;
+}
+
 export interface DockBarMagnificationConfig {
   /** Max scale reached by the item directly under the pointer. Default 1.6 */
   scale?: number;
@@ -184,6 +189,13 @@ export interface DockBarProps {
    * render it in the document flow. Default `'bottom-center'`.
    */
   position?: DockBarPosition;
+  /**
+   * Keep the pinned dock off-screen until the pointer reaches its edge (or it gets focus, e.g.
+   * with Tab), like the macOS Dock. `true` or a config object enables it. Ignored with
+   * `position="inline"`. While enabled the dock does not publish `--dockbar-inset-<edge>`: it
+   * overlays the page instead of taking space. Default `false`.
+   */
+  autoHide?: boolean | DockBarAutoHideConfig;
   /**
    * `true` = the variant's default, `false` = disabled, object = overrides merged onto the
    * variant's default. Defaults: glass/solid `{ scale: 1.6, distance: 140 }`, pill

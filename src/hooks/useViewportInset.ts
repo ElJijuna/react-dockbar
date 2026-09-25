@@ -31,8 +31,9 @@ export function useViewportInset(
   containerRef: RefObject<HTMLElement | null>,
   position: DockBarPosition,
   orientation: DockBarOrientation,
+  enabled = true,
 ): void {
-  const edge = resolveDockEdge(position, orientation);
+  const edge = enabled ? resolveDockEdge(position, orientation) : null;
 
   useIsomorphicLayoutEffect(() => {
     const element = containerRef.current;

@@ -1,4 +1,5 @@
 import {
+  type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
   type ReactElement,
@@ -12,17 +13,19 @@ import {
 import {
   DEFAULT_ANIMATION_DURATION_MS,
   DEFAULT_ARIA_LABEL,
+  DEFAULT_AUTO_HIDE_DELAY,
   DEFAULT_BACK_LABEL,
   DEFAULT_LABELS,
   DEFAULT_PREVIEW_DELAY,
   DOCKBAR_BACK_ID,
 } from '../constants';
+import { useAutoHide } from '../hooks/useAutoHide';
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
 import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect';
 import { usePreviewsState } from '../hooks/usePreviewsState';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useRovingFocus } from '../hooks/useRovingFocus';
-import { useViewportInset } from '../hooks/useViewportInset';
+import { resolveDockEdge, useViewportInset } from '../hooks/useViewportInset';
 import type { DockBarItem, DockBarNavigateEvent, DockBarPreview, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
 import { getPreviews } from '../utils/getPreviews';
@@ -52,6 +55,7 @@ export const DockBar = ({
   size = 'md',
   orientation = 'horizontal',
   position = 'bottom-center',
+  autoHide = false,
   magnification = true,
   animationDuration = DEFAULT_ANIMATION_DURATION_MS,
   reducedMotion = 'system',
@@ -166,7 +170,16 @@ export const DockBar = ({
       )
     : undefined;
   const previewSide = resolvePreviewSide(position, orientation);
-  useViewportInset(containerRef, position, orientation);
+  const dockEdge = resolveDockEdge(position, orientation);
+  const autoHideEnabled = autoHide !== false && dockEdge !== null;
+  // An auto-hiding dock overlays the page when shown, so it reserves no space.
+  useViewportInset(containerRef, position, orientation, !autoHideEnabled);
+  const autoHideState = useAutoHide({
+    enabled: autoHideEnabled,
+    delay: (typeof autoHide === 'object' ? autoHide.delay : undefined) ?? DEFAULT_AUTO_HIDE_DELAY,
+    containerRef,
+    keepVisible: openPreviewsItem !== undefined || phase !== 'idle',
+  });
   /** Item whose panel should take focus when it opens (opened from the keyboard). */
   const [previewsFocusId, setPreviewsFocusId] = useState<string | null>(null);
 
@@ -379,78 +392,103 @@ export const DockBar = ({
     .filter(Boolean)
     .join(' ');
 
+  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
+    roving.handleFocus(event);
+    autoHideState.handleFocus();
+  };
+
   return (
-    <div
-      ref={containerRef}
-      role="toolbar"
-      aria-label={ariaLabel}
-      aria-orientation={orientation}
-      data-dockbar-color-scheme={colorScheme}
-      data-dockbar-variant={variant}
-      data-dockbar-orientation={orientation}
-      data-dockbar-position={position}
-      className={rootClassName}
-      style={style}
-      onKeyDown={handleKeyDown}
-      onFocus={roving.handleFocus}
-    >
-      {depth > 0 ? (
-        <DockBarBackButton
-          skipIntro={!hasMounted}
-          item={resolvedBackItem}
-          ariaLabel={backAriaLabel}
-          leaving={backLeaving}
-          tabIndex={roving.tabStopId === DOCKBAR_BACK_ID ? 0 : -1}
+    <>
+      <div
+        ref={containerRef}
+        role="toolbar"
+        aria-label={ariaLabel}
+        aria-orientation={orientation}
+        data-dockbar-color-scheme={colorScheme}
+        data-dockbar-variant={variant}
+        data-dockbar-orientation={orientation}
+        data-dockbar-position={position}
+        data-dockbar-edge={autoHideEnabled ? (dockEdge ?? undefined) : undefined}
+        data-dockbar-auto-hide={autoHideEnabled || undefined}
+        data-dockbar-hidden={autoHideState.hidden || undefined}
+        data-dockbar-instant={(autoHideEnabled && instant) || undefined}
+        className={rootClassName}
+        style={style}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={autoHideEnabled ? autoHideState.handleBlur : undefined}
+        onPointerEnter={autoHideEnabled ? autoHideState.handlePointerEnter : undefined}
+        onPointerLeave={autoHideEnabled ? autoHideState.handlePointerLeave : undefined}
+      >
+        {depth > 0 ? (
+          <DockBarBackButton
+            skipIntro={!hasMounted}
+            item={resolvedBackItem}
+            ariaLabel={backAriaLabel}
+            leaving={backLeaving}
+            tabIndex={roving.tabStopId === DOCKBAR_BACK_ID ? 0 : -1}
+            animationDuration={animationDuration}
+            itemClassName={itemClassName}
+            onActivate={handleActivate}
+          />
+        ) : null}
+        <DockBarLevel
+          key={depth}
+          items={levelItems}
+          phase={phase}
+          direction={direction}
+          orientation={orientation}
           animationDuration={animationDuration}
+          magnification={magnification}
+          variant={variant}
+          activePathIds={activePathIds}
+          tabStopId={roving.tabStopId}
+          parentItemLabel={resolvedLabels.parentItem}
+          previewsItemLabel={resolvedLabels.previewsItem}
+          badgeLabel={resolvedLabels.badge}
+          openPreviewsId={openPreviewsItem?.id ?? null}
+          previewsPanelId={previewsPanelId}
+          onPreviewsHover={handlePreviewsHover}
+          onPreviewsLeave={previews.leave}
           itemClassName={itemClassName}
           onActivate={handleActivate}
+          onAnimationEnd={handleLevelAnimationEnd}
+        />
+        {openPreviewsItem ? (
+          <DockBarPreviews
+            key={openPreviewsItem.id}
+            id={previewsPanelId}
+            item={openPreviewsItem}
+            previews={getPreviews(openPreviewsItem)}
+            side={previewSide}
+            getAnchor={getPreviewsAnchor}
+            pinned={previews.pinned}
+            autoFocus={previewsFocusId === openPreviewsItem.id}
+            instant={instant}
+            panelLabel={resolvedLabels.previewsPanel}
+            closeLabel={resolvedLabels.closePreview}
+            onSelectPreview={handleSelectPreview}
+            onClosePreview={handleClosePreview}
+            onRequestClose={closePreviews}
+            onPointerEnter={previews.cancelClose}
+            onPointerLeave={previews.leave}
+          />
+        ) : null}
+        <span className={styles.visuallyHidden} role="status" aria-live="polite">
+          {liveMessage}
+        </span>
+      </div>
+      {autoHideEnabled ? (
+        // Thin strip along the edge: reaching it with the pointer brings the dock back.
+        <div
+          aria-hidden="true"
+          className={styles.revealZone}
+          data-dockbar-part="reveal-zone"
+          data-dockbar-edge={dockEdge ?? undefined}
+          onPointerEnter={autoHideState.handlePointerEnter}
+          onPointerLeave={autoHideState.handlePointerLeave}
         />
       ) : null}
-      <DockBarLevel
-        key={depth}
-        items={levelItems}
-        phase={phase}
-        direction={direction}
-        orientation={orientation}
-        animationDuration={animationDuration}
-        magnification={magnification}
-        variant={variant}
-        activePathIds={activePathIds}
-        tabStopId={roving.tabStopId}
-        parentItemLabel={resolvedLabels.parentItem}
-        previewsItemLabel={resolvedLabels.previewsItem}
-        badgeLabel={resolvedLabels.badge}
-        openPreviewsId={openPreviewsItem?.id ?? null}
-        previewsPanelId={previewsPanelId}
-        onPreviewsHover={handlePreviewsHover}
-        onPreviewsLeave={previews.leave}
-        itemClassName={itemClassName}
-        onActivate={handleActivate}
-        onAnimationEnd={handleLevelAnimationEnd}
-      />
-      {openPreviewsItem ? (
-        <DockBarPreviews
-          key={openPreviewsItem.id}
-          id={previewsPanelId}
-          item={openPreviewsItem}
-          previews={getPreviews(openPreviewsItem)}
-          side={previewSide}
-          getAnchor={getPreviewsAnchor}
-          pinned={previews.pinned}
-          autoFocus={previewsFocusId === openPreviewsItem.id}
-          instant={instant}
-          panelLabel={resolvedLabels.previewsPanel}
-          closeLabel={resolvedLabels.closePreview}
-          onSelectPreview={handleSelectPreview}
-          onClosePreview={handleClosePreview}
-          onRequestClose={closePreviews}
-          onPointerEnter={previews.cancelClose}
-          onPointerLeave={previews.leave}
-        />
-      ) : null}
-      <span className={styles.visuallyHidden} role="status" aria-live="polite">
-        {liveMessage}
-      </span>
-    </div>
+    </>
   );
 };

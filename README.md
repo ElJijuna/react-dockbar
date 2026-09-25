@@ -99,6 +99,12 @@ function AppMenuBar() {
   `'inline'` to render it in the document flow inside your own layout. Tooltips and
   magnification open away from the edge. Tune the edge distance with `--dockbar-offset`
   (default `16px`) and stacking with `--dockbar-z-index` (default `1000`).
+- **Auto-hide**: `autoHide` keeps the pinned dock off-screen, like the macOS Dock. It slides in
+  when the pointer reaches its edge (a `--dockbar-reveal-size`, default `4px`, strip along
+  it), stays while the pointer is over it, focus is inside (so Tab always reveals it) or a
+  previews panel is open, and hides again after `autoHide={{ delay }}` ms (default `400`). On
+  touch, a tap on the edge reveals it until the next tap outside. An auto-hiding dock overlays
+  the page, so it does not publish `--dockbar-inset-<edge>`. Ignored with `position="inline"`.
 - **Reserving space for the pinned dock**: while pinned, the dock publishes the space it takes
   from its edge (distance to the edge plus its thickness) on `<html>` as
   `--dockbar-inset-bottom`, `--dockbar-inset-top`, `--dockbar-inset-left` or

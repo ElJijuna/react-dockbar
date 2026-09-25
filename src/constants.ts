@@ -29,6 +29,8 @@ export const DEFAULT_MAGNIFICATION_BY_VARIANT: Record<
   pill: { scale: 1.25, distance: 90, transitionMs: 90 },
 };
 
+export const DEFAULT_AUTO_HIDE_DELAY = 400;
+
 export const DEFAULT_PREVIEW_DELAY: Required<DockBarPreviewDelay> = { open: 400, close: 200 };
 
 export const DEFAULT_ARIA_LABEL = 'App dock';

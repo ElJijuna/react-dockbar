@@ -134,6 +134,7 @@ const meta: Meta<typeof DockBar> = {
     variant: { control: 'radio', options: ['pill', 'glass', 'solid'] },
     position: { control: 'select', options: POSITIONS },
     orientation: { control: 'radio', options: ['horizontal', 'vertical'] },
+    autoHide: { control: 'boolean' },
     size: { control: 'radio', options: ['sm', 'md', 'lg'] },
     colorScheme: { control: 'radio', options: ['auto', 'light', 'dark'] },
     animationDuration: { control: { type: 'range', min: 0, max: 800, step: 20 } },
@@ -278,6 +279,16 @@ export const ReservedSpace: Story = {
       <DockBar {...args} />
     </>
   ),
+};
+
+/** Hidden until the pointer reaches the bottom edge (or Tab reaches the dock), like the macOS Dock. */
+export const AutoHide: Story = {
+  args: {
+    items: pillItems,
+    defaultActiveId: 'home',
+    ariaLabel: 'Toolbar',
+    autoHide: true,
+  },
 };
 
 export const FlatDock: Story = {

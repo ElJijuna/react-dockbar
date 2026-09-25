@@ -52,6 +52,80 @@
   margin-block: auto;
 }
 
+/* Auto-hide: slide past the edge (offset + safe area + room for the shadow), stay focusable. */
+.dockbar[data-dockbar-auto-hide] {
+  --dockbar-hide-distance: calc(var(--dockbar-offset, 16px) + 24px);
+  transition: transform var(--dockbar-auto-hide-duration, 220ms) var(--dockbar-transition-easing);
+}
+
+.dockbar[data-dockbar-instant] {
+  transition-duration: 0ms;
+}
+
+.dockbar[data-dockbar-hidden][data-dockbar-edge="bottom"] {
+  transform: translateY(
+    calc(100% + var(--dockbar-hide-distance) + env(safe-area-inset-bottom, 0px))
+  );
+}
+
+.dockbar[data-dockbar-hidden][data-dockbar-edge="top"] {
+  transform: translateY(calc(-100% - var(--dockbar-hide-distance) - env(safe-area-inset-top, 0px)));
+}
+
+.dockbar[data-dockbar-hidden][data-dockbar-edge="left"] {
+  transform: translateX(
+    calc(-100% - var(--dockbar-hide-distance) - env(safe-area-inset-left, 0px))
+  );
+}
+
+.dockbar[data-dockbar-hidden][data-dockbar-edge="right"] {
+  transform: translateX(
+    calc(100% + var(--dockbar-hide-distance) + env(safe-area-inset-right, 0px))
+  );
+}
+
+/* The strip along the edge that brings an auto-hidden dock back. */
+.revealZone {
+  position: fixed;
+  z-index: var(--dockbar-z-index, 1000);
+}
+
+.revealZone[data-dockbar-edge="bottom"],
+.revealZone[data-dockbar-edge="top"] {
+  left: 0;
+  right: 0;
+  height: var(--dockbar-reveal-size, 4px);
+}
+
+.revealZone[data-dockbar-edge="bottom"] {
+  bottom: 0;
+}
+
+.revealZone[data-dockbar-edge="top"] {
+  top: 0;
+}
+
+.revealZone[data-dockbar-edge="left"],
+.revealZone[data-dockbar-edge="right"] {
+  top: 0;
+  bottom: 0;
+  width: var(--dockbar-reveal-size, 4px);
+}
+
+.revealZone[data-dockbar-edge="left"] {
+  left: 0;
+}
+
+.revealZone[data-dockbar-edge="right"] {
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dockbar[data-dockbar-auto-hide] {
+    transition-duration: 0ms;
+  }
+}
+
 .dockbar * {
   box-sizing: border-box;
 }
