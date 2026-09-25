@@ -1,6 +1,6 @@
 {
     "name": "react-dockbar",
-    "version": "0.1.0",
+    "version": "1.1.0",
     "description": "A macOS-Dock-style, animated, drill-down app bar for React 18/19, with glass light/dark themes.",
     "license": "MIT",
     "author": "pilmee <pilmee@gmail.com>",
@@ -68,6 +68,8 @@
     },
     "devDependencies": {
         "@biomejs/biome": "^2.4.13",
+        "@semantic-release/changelog": "^7.0.0",
+        "@semantic-release/git": "^11.0.1",
         "@storybook/addon-a11y": "^10.6.0",
         "@storybook/react-vite": "^10.6.0",
         "@testing-library/jest-dom": "^7.0.1",
