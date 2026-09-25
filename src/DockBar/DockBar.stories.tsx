@@ -122,6 +122,7 @@ const meta: Meta<typeof DockBar> = {
   args: {
     variant: 'pill',
     position: 'bottom-center',
+    colorScheme: 'auto',
   },
   argTypes: {
     variant: { control: 'radio', options: ['pill', 'glass', 'solid'] },

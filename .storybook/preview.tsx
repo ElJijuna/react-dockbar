@@ -7,25 +7,10 @@ const preview: Preview = {
     layout: 'fullscreen',
     a11y: { test: 'error' },
   },
-  globalTypes: {
-    colorScheme: {
-      description: 'DockBar color scheme',
-      toolbar: {
-        title: 'Color scheme',
-        icon: 'circlehollow',
-        items: [
-          { value: 'auto', title: 'Auto' },
-          { value: 'light', title: 'Light' },
-          { value: 'dark', title: 'Dark' },
-        ],
-        dynamicTitle: true,
-      },
-    },
-  },
-  initialGlobals: { colorScheme: 'auto' },
   decorators: [
     // The transform makes this frame the containing block of the `position: fixed` dock, so it
     // is pinned to the preview (also each docs-page preview) instead of the browser window.
+    // The background follows the story's `colorScheme` control (`auto` = the OS setting).
     (Story, ctx): ReactElement => (
       <div
         style={{
@@ -37,10 +22,14 @@ const preview: Preview = {
           boxSizing: 'border-box',
           height: ctx.viewMode === 'docs' ? (ctx.parameters.docsFrameHeight ?? 280) : '100vh',
           padding: 48,
-          background: ctx.globals.colorScheme === 'dark' ? '#111' : '#eee',
+          colorScheme:
+            ctx.args.colorScheme === 'light' || ctx.args.colorScheme === 'dark'
+              ? ctx.args.colorScheme
+              : 'light dark',
+          background: 'light-dark(#eee, #111)',
         }}
       >
-        <Story args={{ ...ctx.args, colorScheme: ctx.globals.colorScheme }} />
+        <Story />
       </div>
     ),
   ],
