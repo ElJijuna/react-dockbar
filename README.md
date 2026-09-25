@@ -45,6 +45,26 @@ light and dark.
 npm install react-dockbar
 ```
 
+<details>
+<summary>Installing from GitHub Packages instead</summary>
+
+Every release is also published to GitHub Packages as `@eljijuna/react-dockbar`. GitHub
+requires authentication even for public packages: add this `.npmrc` next to your
+`package.json`, with a token that has the `read:packages` scope in `GITHUB_TOKEN`:
+
+```ini
+@eljijuna:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+```bash
+npm install @eljijuna/react-dockbar
+```
+
+Import from `@eljijuna/react-dockbar` (and `@eljijuna/react-dockbar/style.css`) instead.
+
+</details>
+
 ```jsx
 import { DockBar } from 'react-dockbar';
 import 'react-dockbar/style.css';

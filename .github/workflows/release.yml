@@ -75,6 +75,43 @@ jobs:
             echo "No new release"
           fi
 
+  # Mirror of the npm release. A separate job so a failure here never affects npm, which has
+  # already published by the time this runs.
+  github-packages:
+    name: Publish to GitHub Packages
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The release tag carries the package.json bumped to the released version.
+          ref: v${{ needs.release.outputs.version }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@eljijuna'
+
+      - run: npm ci
+      - run: npm run build
+
+      # Only in this job: GitHub Packages requires the owner's scope and has no provenance.
+      - name: Scope the package for GitHub Packages
+        run: |
+          npm pkg set name=@eljijuna/react-dockbar
+          npm pkg delete publishConfig.provenance
+
+      # Tests already ran in the release job; skip prepublishOnly.
+      - run: npm publish --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   storybook:
     name: Deploy Storybook to GitHub Pages
     needs: release
