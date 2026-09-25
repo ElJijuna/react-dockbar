@@ -1,6 +1,14 @@
-import type { CSSProperties, FocusEvent, KeyboardEvent, MouseEvent, ReactElement } from 'react';
+import type {
+  CSSProperties,
+  FocusEvent,
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
+  ReactElement,
+} from 'react';
 import { DEFAULT_LABELS } from '../constants';
 import type { DockBarItem, DockBarItemState, DockBarLabels, DockBarProps } from '../types';
+import { getPreviews } from '../utils/getPreviews';
 import { isSeparator } from '../utils/isSeparator';
 import { isToggleItem } from '../utils/isToggleItem';
 import styles from './DockBarItemButton.module.css';
@@ -13,6 +21,13 @@ export interface DockBarItemButtonProps {
   ariaLabel?: string;
   /** Builds the accessible name of items that open a submenu. */
   parentItemLabel?: Required<DockBarLabels>['parentItem'];
+  /** Builds the accessible name of items with open windows. */
+  previewsItemLabel?: Required<DockBarLabels>['previewsItem'];
+  /** This item's previews panel is open; `previewsPanelId` is the panel's element id. */
+  previewsOpen?: boolean;
+  previewsPanelId?: string;
+  onPreviewsHover?: (item: DockBarItem) => void;
+  onPreviewsLeave?: () => void;
   hovered: boolean;
   active: boolean;
   containsActive: boolean;
@@ -32,6 +47,11 @@ export const DockBarItemButton = ({
   tabIndex,
   ariaLabel,
   parentItemLabel = DEFAULT_LABELS.parentItem,
+  previewsItemLabel = DEFAULT_LABELS.previewsItem,
+  previewsOpen = false,
+  previewsPanelId,
+  onPreviewsHover,
+  onPreviewsLeave,
   hovered,
   active,
   containsActive,
@@ -46,10 +66,15 @@ export const DockBarItemButton = ({
   const pressed = isToggle && item.pressed === true;
   const state: DockBarItemState = { hovered, isBack, active, containsActive, pressed };
   const childCount = item.children?.filter((entry) => !isSeparator(entry)).length ?? 0;
+  const previewCount = isBack ? 0 : getPreviews(item).length;
   const resolvedAriaLabel =
     ariaLabel ??
     item['aria-label'] ??
-    (isParent ? parentItemLabel(item.label, childCount) : item.label);
+    (isParent
+      ? parentItemLabel(item.label, childCount)
+      : previewCount > 0
+        ? previewsItemLabel(item.label, previewCount)
+        : item.label);
   const extraClassName =
     typeof itemClassName === 'function' ? itemClassName(item, state) : itemClassName;
   const className = [styles.item, isParent && styles.parent, isBack && styles.back, extraClassName]
@@ -68,6 +93,19 @@ export const DockBarItemButton = ({
     }
   };
 
+  // Touch has no hover: its taps open the panel through `onActivate` instead.
+  const handlePointerEnter = (event: PointerEvent<HTMLElement>) => {
+    if (previewCount > 0 && event.pointerType !== 'touch' && !item.disabled) {
+      onPreviewsHover?.(item);
+    }
+  };
+
+  const handlePointerLeave = (event: PointerEvent<HTMLElement>) => {
+    if (previewCount > 0 && event.pointerType !== 'touch') {
+      onPreviewsLeave?.();
+    }
+  };
+
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     if (item.disabled) {
       return;
@@ -83,6 +121,14 @@ export const DockBarItemButton = ({
       <span className={styles.label} aria-hidden="true">
         {item.label}
       </span>
+      {previewCount > 0 ? (
+        <span className={styles.running} aria-hidden="true">
+          {Array.from({ length: Math.min(previewCount, 3) }, (_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: identical, purely decorative dots.
+            <span key={index} className={styles.runningDot} />
+          ))}
+        </span>
+      ) : null}
       {item.badge ? (
         <span className={styles.badge} aria-hidden="true">
           {item.badge}
@@ -100,8 +146,13 @@ export const DockBarItemButton = ({
     'data-dockbar-active': active ? 'self' : containsActive ? 'ancestor' : undefined,
     'aria-current': active ? (item.href ? ('page' as const) : true) : undefined,
     'data-dockbar-pressed': pressed || undefined,
+    'data-dockbar-running': previewCount > 0 || undefined,
     'aria-label': resolvedAriaLabel,
+    'aria-expanded': previewCount > 0 ? previewsOpen : undefined,
+    'aria-controls': previewsOpen ? previewsPanelId : undefined,
     onFocus: handleFocus,
+    onPointerEnter: handlePointerEnter,
+    onPointerLeave: handlePointerLeave,
     onBlur: onBlurItem,
     onClick: handleClick,
   };

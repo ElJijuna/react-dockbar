@@ -20,7 +20,43 @@ export interface DockBarItem {
    * Ignored on items with `children` or `href`.
    */
   pressed?: boolean;
+  /**
+   * Open windows of this app, shown as thumbnails in a panel over the item on hover (or on
+   * click when there are two or more). Ignored on items with `children` or `href`.
+   */
+  previews?: DockBarPreview[];
   'aria-label'?: string;
+}
+
+/** One open window of an app, shown as a thumbnail in the item's previews panel. */
+export interface DockBarPreview {
+  id: string;
+  /** Window title, shown under the thumbnail and used as its accessible name. */
+  title: string;
+  /** Any content: an `<img>`, `<canvas>`, `<video>`… Only mounted while the panel is open. */
+  thumbnail: ReactNode;
+  /** The window currently in front; marked with `aria-current`. */
+  active?: boolean;
+  /** Called when the thumbnail is activated. Closes the panel. */
+  onSelect?: (event: DockBarPreviewEvent) => void;
+  /** When set, a close button is shown (also `Delete` on the focused thumbnail). */
+  onClose?: (event: DockBarPreviewEvent) => void;
+}
+
+export interface DockBarPreviewEvent {
+  /** The dock item that owns the preview. */
+  item: DockBarItem;
+  preview: DockBarPreview;
+  /** Breadcrumb of parent items leading to the dock item, root-first. */
+  path: DockBarItem[];
+  nativeEvent: globalThis.MouseEvent | globalThis.KeyboardEvent;
+}
+
+export interface DockBarPreviewDelay {
+  /** Hover time in ms before the panel opens. Default 400. */
+  open?: number;
+  /** Time in ms the panel stays after the pointer leaves, to reach it across the gap. Default 200. */
+  close?: number;
 }
 
 /** Thin divider between groups of items. */
@@ -93,6 +129,12 @@ export interface DockBarLabels {
   enteredLevel?: (label: string, depth: number) => string;
   /** Announced after going back; `label` is null when returning to the root. Default: "Back to Settings" / "Back to main menu". */
   returnedTo?: (label: string | null) => string;
+  /** Accessible name of an item with open windows. Default: "Mail, 2 open windows". */
+  previewsItem?: (label: string, count: number) => string;
+  /** Accessible name of the previews panel. Default: "Mail windows". */
+  previewsPanel?: (label: string) => string;
+  /** Accessible name of a thumbnail's close button. Default: "Close Inbox". */
+  closePreview?: (title: string) => string;
 }
 
 export interface DockBarItemState {
@@ -143,6 +185,15 @@ export interface DockBarProps {
   backItem?: Partial<Pick<DockBarItem, 'label' | 'icon'>>;
   onNavigate?: (event: DockBarNavigateEvent) => void;
   ariaLabel?: string;
+  /**
+   * Id of the item whose previews panel is open (controlled). Pass `null` for none. Use with
+   * `onPreviewsOpenChange`.
+   */
+  openPreviewsId?: string | null;
+  /** Called with the item id when a previews panel opens, and `null` when it closes. */
+  onPreviewsOpenChange?: (itemId: string | null) => void;
+  /** Hover delays of the previews panel. Default `{ open: 400, close: 200 }`. */
+  previewDelay?: DockBarPreviewDelay;
   /** Translatable screen-reader texts; any omitted builder falls back to English. */
   labels?: DockBarLabels;
   className?: string;

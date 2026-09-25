@@ -32,7 +32,13 @@ import {
   MdWifi,
 } from 'react-icons/md';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import type { DockBarEntry, DockBarItem, DockBarPosition, DockBarProps } from '../types';
+import type {
+  DockBarEntry,
+  DockBarItem,
+  DockBarPosition,
+  DockBarPreview,
+  DockBarProps,
+} from '../types';
 import { DockBar } from './DockBar';
 
 // All stories share the Pill Toolbar look (pill variant, Material icons, bottom-center),
@@ -161,6 +167,77 @@ export const PillToolbar: Story = {
     ariaLabel: 'Toolbar',
   },
   render: (args) => <PillToolbarWithPanels {...args} />,
+};
+
+/** Fake window screenshot for the stories: a title bar and a few content lines. */
+const WindowThumbnail = ({ accent }: { accent: string }) => (
+  <svg viewBox="0 0 160 100" role="presentation">
+    <rect width="160" height="100" fill="#f4f4f5" />
+    <rect width="160" height="14" fill={accent} />
+    <circle cx="8" cy="7" r="2.5" fill="#fff" opacity="0.8" />
+    <circle cx="16" cy="7" r="2.5" fill="#fff" opacity="0.8" />
+    <rect x="10" y="24" width="90" height="8" rx="2" fill="#d4d4d8" />
+    <rect x="10" y="40" width="140" height="5" rx="2" fill="#e4e4e7" />
+    <rect x="10" y="51" width="120" height="5" rx="2" fill="#e4e4e7" />
+    <rect x="10" y="62" width="130" height="5" rx="2" fill="#e4e4e7" />
+    <rect x="10" y="76" width="44" height="14" rx="3" fill={accent} opacity="0.7" />
+  </svg>
+);
+
+type OpenWindow = Omit<DockBarPreview, 'thumbnail' | 'onSelect' | 'onClose' | 'active'> & {
+  accent: string;
+};
+
+const INITIAL_WINDOWS: Record<string, OpenWindow[]> = {
+  chat: [
+    { id: 'chat-team', title: 'Team channel', accent: '#6366f1' },
+    { id: 'chat-design', title: 'Design review', accent: '#8b5cf6' },
+    { id: 'chat-support', title: 'Support queue', accent: '#0ea5e9' },
+  ],
+  issues: [
+    { id: 'issue-128', title: '#128 Magnification jitter', accent: '#ef4444' },
+    { id: 'issue-131', title: '#131 Focus ring in Safari', accent: '#f97316' },
+  ],
+  images: [{ id: 'images-board', title: 'Moodboard.png', accent: '#10b981' }],
+};
+
+/**
+ * Apps with open windows: hover an app to see its windows, or click one with several windows
+ * to pin the panel. Focus an app and press ↑ to reach the windows from the keyboard.
+ */
+const PillToolbarWithWindowsRender = (args: DockBarProps) => {
+  const [windows, setWindows] = useState(INITIAL_WINDOWS);
+  const [frontWindowId, setFrontWindowId] = useState<string | null>('chat-design');
+  const items = args.items.map((entry) => {
+    const appWindows = entry.type === 'separator' ? undefined : windows[entry.id];
+    if (!appWindows?.length) {
+      return entry;
+    }
+    return {
+      ...entry,
+      previews: appWindows.map(({ accent, ...window }) => ({
+        ...window,
+        thumbnail: <WindowThumbnail accent={accent} />,
+        active: window.id === frontWindowId,
+        onSelect: () => setFrontWindowId(window.id),
+        onClose: () =>
+          setWindows((all) => ({
+            ...all,
+            [entry.id]: all[entry.id].filter((w) => w.id !== window.id),
+          })),
+      })),
+    };
+  });
+  return <DockBar {...args} items={items} />;
+};
+
+export const PillToolbarWithWindows: Story = {
+  args: {
+    items: pillItems,
+    defaultActiveId: 'chat',
+    ariaLabel: 'Toolbar',
+  },
+  render: (args) => <PillToolbarWithWindowsRender {...args} />,
 };
 
 export const FlatDock: Story = {
@@ -295,6 +372,10 @@ export const SpanishLabels: Story = {
       backTo: (label) => `Volver a ${label}`,
       enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
       returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+      previewsItem: (label, count) =>
+        `${label}, ${count} ${count === 1 ? 'ventana abierta' : 'ventanas abiertas'}`,
+      previewsPanel: (label) => `Ventanas de ${label}`,
+      closePreview: (title) => `Cerrar ${title}`,
     },
   },
 };

@@ -40,6 +40,7 @@ export function useMagnify(
   variant: DockBarVariant,
   orientation: DockBarOrientation,
   levelRef: RefObject<HTMLElement | null>,
+  { hold = false }: { hold?: boolean } = {},
 ): UseMagnifyResult {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const centersRef = useRef<number[] | null>(null);
@@ -167,10 +168,22 @@ export function useMagnify(
     },
     [resolved, pointerCoordinate, measure, apply],
   );
+  // While held, leaving keeps the current scales; releasing the hold then settles them.
+  const holdRef = useRef(hold);
   const handlePointerLeave = useCallback(() => {
     pointerInsideRef.current = false;
-    reset();
+    if (!holdRef.current) {
+      reset();
+    }
   }, [reset]);
+
+  useEffect(() => {
+    const released = holdRef.current && !hold;
+    holdRef.current = hold;
+    if (released && !pointerInsideRef.current) {
+      reset();
+    }
+  }, [hold, reset]);
 
   const focusItem = useCallback(
     (element: HTMLElement) => {
@@ -186,7 +199,7 @@ export function useMagnify(
 
   // Keyboard blur must not undo magnification that the pointer is still driving.
   const blurItem = useCallback(() => {
-    if (!pointerInsideRef.current) {
+    if (!pointerInsideRef.current && !holdRef.current) {
       reset();
     }
   }, [reset]);

@@ -1,4 +1,9 @@
-import type { DockBarLabels, DockBarMagnificationConfig, DockBarVariant } from './types';
+import type {
+  DockBarLabels,
+  DockBarMagnificationConfig,
+  DockBarPreviewDelay,
+  DockBarVariant,
+} from './types';
 
 export const DOCKBAR_BACK_ID = '__dockbar-back__';
 
@@ -24,6 +29,8 @@ export const DEFAULT_MAGNIFICATION_BY_VARIANT: Record<
   pill: { scale: 1.25, distance: 90, transitionMs: 90 },
 };
 
+export const DEFAULT_PREVIEW_DELAY: Required<DockBarPreviewDelay> = { open: 400, close: 200 };
+
 export const DEFAULT_ARIA_LABEL = 'App dock';
 export const DEFAULT_BACK_LABEL = 'Back';
 
@@ -33,4 +40,7 @@ export const DEFAULT_LABELS: Required<DockBarLabels> = {
   backTo: (parentLabel) => `Back to ${parentLabel}`,
   enteredLevel: (label, depth) => `${label}, level ${depth + 1}`,
   returnedTo: (label) => (label ? `Back to ${label}` : 'Back to main menu'),
+  previewsItem: (label, count) => `${label}, ${count} open ${count === 1 ? 'window' : 'windows'}`,
+  previewsPanel: (label) => `${label} windows`,
+  closePreview: (title) => `Close ${title}`,
 };

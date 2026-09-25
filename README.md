@@ -24,6 +24,21 @@ A macOS-Dock-style, animated app bar for React 18 and 19: hover magnification, d
 navigation with an auto-inserted Back item, and a glass/translucent theme configurable for
 light and dark.
 
+![react-dockbar pill toolbar with a tooltip over the hovered item](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/pill-toolbar-light.png)
+
+**[Live demo (Storybook)](https://eljijuna.github.io/react-dockbar/)**
+
+## Screenshots
+
+| | |
+| --- | --- |
+| **Open windows**: hover an app to see its windows as thumbnails.<br>![Previews panel with three window thumbnails over the Chat item](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/window-previews.png) | **Drill-down**: nested levels with an auto-inserted Back button.<br>![Submenu level with the Back button next to the dock](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/drill-down.png) |
+| **Dark mode**: `colorScheme="dark"` (or `auto`).<br>![Pill toolbar in dark mode](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/pill-toolbar-dark.png) | **Variants**: `pill`, `glass` and `solid`, light and dark.<br>![The three variants in light and dark](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/theme-matrix.png) |
+
+**Positions**: pin it to any edge or corner with `position`, or keep it `inline`.
+
+![The dock in every position of the viewport](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/positions.png)
+
 ## Installation
 
 ```bash
@@ -84,6 +99,19 @@ function AppMenuBar() {
 - **Toggle items**: give a leaf item `pressed: boolean` to make it a toggle button
   (`aria-pressed`) — e.g. panels that can be open at the same time. It is controlled: flip it in
   `onSelect`. Toggling never changes the active item, so both can be shown together.
+- **Open windows (previews)**: give a leaf item `previews` (`{ id, title, thumbnail, active?,
+  onSelect?, onClose? }[]`) to show its open windows. The item gets up to three dots, and
+  hovering it opens a panel of thumbnails over it (after `previewDelay.open`, 400ms; it stays
+  `previewDelay.close`, 200ms, after the pointer leaves so the pointer can reach it). Clicking an
+  item with two or more windows pins the panel instead of calling `onSelect`; with one window
+  the click selects as usual. Selecting a thumbnail calls its `onSelect`, closes the panel and
+  makes the item active; `onClose` adds a close button (and `Delete`). The thumbnails are yours
+  to render (`<img>`, `<canvas>`, `<video>`…) and are only mounted while the panel is open. The
+  panel opens away from the screen edge, in the top layer (Popover API), and can be controlled
+  with `openPreviewsId`/`onPreviewsOpenChange`. Keyboard: the arrow pointing at the panel (↑ for a
+  bottom dock) opens it and focuses the front window, arrows move between windows, `Escape`
+  closes it and returns focus to the item. Style it with `--dockbar-preview-width`,
+  `--dockbar-preview-aspect-ratio`, `--dockbar-preview-radius` and `--dockbar-preview-bg`.
 - **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid' | 'pill'`)
   props switch themes (`pill` is a compact rounded toolbar with a filled active item); deeper customization is available through CSS custom properties
   (`--dockbar-bg`, `--dockbar-blur`, `--dockbar-accent`, `--dockbar-item-size`, ...) documented
@@ -109,6 +137,10 @@ language controls its own grammar and plurals. Any builder you omit falls back t
     backTo: (label) => `Volver a ${label}`,
     enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
     returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+    previewsItem: (label, count) =>
+      `${label}, ${count} ${count === 1 ? 'ventana abierta' : 'ventanas abiertas'}`,
+    previewsPanel: (label) => `Ventanas de ${label}`,
+    closePreview: (title) => `Cerrar ${title}`,
   }}
 />
 ```

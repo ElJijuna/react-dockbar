@@ -4,6 +4,7 @@ import {
   type ReactElement,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -13,20 +14,32 @@ import {
   DEFAULT_ARIA_LABEL,
   DEFAULT_BACK_LABEL,
   DEFAULT_LABELS,
+  DEFAULT_PREVIEW_DELAY,
   DOCKBAR_BACK_ID,
 } from '../constants';
 import { useDockBarNavigation } from '../hooks/useDockBarNavigation';
 import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect';
+import { usePreviewsState } from '../hooks/usePreviewsState';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useRovingFocus } from '../hooks/useRovingFocus';
-import type { DockBarItem, DockBarNavigateEvent, DockBarProps } from '../types';
+import type { DockBarItem, DockBarNavigateEvent, DockBarPreview, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
+import { getPreviews } from '../utils/getPreviews';
 import { isSeparator } from '../utils/isSeparator';
 import { isToggleItem } from '../utils/isToggleItem';
+import { resolvePreviewSide } from '../utils/placePreviews';
 import styles from './DockBar.module.css';
 import { DockBarBackButton } from './DockBarBackButton';
 import { DockBarLevel } from './DockBarLevel';
+import { DockBarPreviews } from './DockBarPreviews';
 import { ChevronLeftIcon } from './icons';
+
+const PREVIEW_OPEN_KEY = {
+  top: 'ArrowUp',
+  bottom: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+} as const;
 
 export const DockBar = ({
   items,
@@ -43,6 +56,9 @@ export const DockBar = ({
   reducedMotion = 'system',
   backItem,
   onNavigate,
+  openPreviewsId: openPreviewsIdProp,
+  onPreviewsOpenChange,
+  previewDelay,
   ariaLabel = DEFAULT_ARIA_LABEL,
   labels,
   className,
@@ -119,6 +135,113 @@ export const DockBar = ({
     initialPathIds,
   });
 
+  const previewsPanelId = `${useId()}previews`;
+  const isInPreviewsPanel = useCallback(
+    (node: Node | null) =>
+      Boolean(node && document.getElementById(previewsPanelId)?.contains(node)),
+    [previewsPanelId],
+  );
+  const previewDelayOpen = previewDelay?.open ?? DEFAULT_PREVIEW_DELAY.open;
+  const previewDelayClose = previewDelay?.close ?? DEFAULT_PREVIEW_DELAY.close;
+  const resolvedPreviewDelay = useMemo(
+    () => ({ open: previewDelayOpen, close: previewDelayClose }),
+    [previewDelayOpen, previewDelayClose],
+  );
+  const previews = usePreviewsState({
+    openId: openPreviewsIdProp,
+    onOpenChange: onPreviewsOpenChange,
+    delay: resolvedPreviewDelay,
+  });
+  const {
+    open: openPreviewsState,
+    close: closePreviewsState,
+    hoverItem: hoverPreviewsItem,
+  } = previews;
+  // Only an item of the current level that still has previews can show its panel.
+  const openPreviewsItem = previews.openId
+    ? levelItems.find(
+        (entry): entry is DockBarItem =>
+          !isSeparator(entry) && entry.id === previews.openId && getPreviews(entry).length > 0,
+      )
+    : undefined;
+  const previewSide = resolvePreviewSide(position, orientation);
+  /** Item whose panel should take focus when it opens (opened from the keyboard). */
+  const [previewsFocusId, setPreviewsFocusId] = useState<string | null>(null);
+
+  const getPreviewsAnchor = useCallback(
+    () =>
+      previews.openId
+        ? (containerRef.current?.querySelector<HTMLElement>(
+            `[data-dockbar-part="level"] [data-dockbar-item-id="${CSS.escape(previews.openId)}"]`,
+          ) ?? null)
+        : null,
+    [previews.openId],
+  );
+
+  // Closing while focus is inside the panel hands it back to the item instead of <body>.
+  const closePreviews = useCallback(() => {
+    const anchor = getPreviewsAnchor();
+    const restoreFocus = isInPreviewsPanel(document.activeElement);
+    closePreviewsState();
+    setPreviewsFocusId(null);
+    if (restoreFocus) {
+      anchor?.focus();
+    }
+  }, [getPreviewsAnchor, isInPreviewsPanel, closePreviewsState]);
+
+  const openPreviews = useCallback(
+    (item: DockBarItem, { focus }: { focus: boolean }) => {
+      setPreviewsFocusId(focus ? item.id : null);
+      openPreviewsState(item.id, { pinned: true });
+    },
+    [openPreviewsState],
+  );
+
+  // Navigating to another level, or the open item losing its previews, closes the panel.
+  useEffect(() => {
+    if (previews.openId !== null && (!openPreviewsItem || phase !== 'idle')) {
+      closePreviews();
+    }
+  }, [previews.openId, openPreviewsItem, phase, closePreviews]);
+
+  const handlePreviewsHover = useCallback(
+    (item: DockBarItem) => hoverPreviewsItem(item.id),
+    [hoverPreviewsItem],
+  );
+
+  const handleSelectPreview = useCallback(
+    (preview: DockBarPreview, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
+      if (!openPreviewsItem) {
+        return;
+      }
+      closePreviews();
+      if (!isActiveControlled && !isToggleItem(openPreviewsItem)) {
+        setUncontrolledActiveId(openPreviewsItem.id);
+      }
+      preview.onSelect?.({
+        item: openPreviewsItem,
+        preview,
+        path: breadcrumb,
+        nativeEvent: event.nativeEvent,
+      });
+    },
+    [openPreviewsItem, closePreviews, isActiveControlled, breadcrumb],
+  );
+
+  const handleClosePreview = useCallback(
+    (preview: DockBarPreview, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
+      if (openPreviewsItem) {
+        preview.onClose?.({
+          item: openPreviewsItem,
+          preview,
+          path: breadcrumb,
+          nativeEvent: event.nativeEvent,
+        });
+      }
+    },
+    [openPreviewsItem, breadcrumb],
+  );
+
   // Move focus to the newly-revealed Back button (drilling in) or back to the item the
   // user originally drilled into (backing out) once the new level is committed to the DOM.
   useIsomorphicLayoutEffect(() => {
@@ -143,12 +266,35 @@ export const DockBar = ({
         navigateTo(item);
         return;
       }
+      // Several windows: the item opens its panel (and pins it) instead of selecting.
+      const previewCount = getPreviews(item).length;
+      if (previewCount >= 2) {
+        if (previews.openId === item.id && previews.pinned) {
+          closePreviews();
+        } else {
+          // `detail` is 0 for clicks synthesized by Enter/Space.
+          openPreviews(item, { focus: event.detail === 0 });
+        }
+        return;
+      }
+      if (previewCount === 1 && previews.openId !== null) {
+        closePreviews();
+      }
       if (!isActiveControlled && !isToggleItem(item)) {
         setUncontrolledActiveId(item.id);
       }
       item.onSelect?.({ item, path: breadcrumb, nativeEvent: event.nativeEvent });
     },
-    [navigateTo, navigateBack, breadcrumb, isActiveControlled],
+    [
+      navigateTo,
+      navigateBack,
+      breadcrumb,
+      isActiveControlled,
+      previews.openId,
+      previews.pinned,
+      closePreviews,
+      openPreviews,
+    ],
   );
 
   const focusableIds = useMemo(
@@ -174,6 +320,31 @@ export const DockBar = ({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
+      // The previews panel handles its own keys.
+      if (isInPreviewsPanel(event.target as Node)) {
+        return;
+      }
+      if (event.key === 'Escape' && previews.openId !== null) {
+        event.stopPropagation();
+        closePreviews();
+        return;
+      }
+      // The arrow that points at the panel opens it and moves focus into it.
+      const focusedId = (event.target as HTMLElement).closest<HTMLElement>('[data-dockbar-item-id]')
+        ?.dataset.dockbarItemId;
+      const focusedItem = levelItems.find(
+        (entry): entry is DockBarItem => !isSeparator(entry) && entry.id === focusedId,
+      );
+      if (
+        focusedItem &&
+        phase === 'idle' &&
+        event.key === PREVIEW_OPEN_KEY[previewSide] &&
+        getPreviews(focusedItem).length > 0
+      ) {
+        event.preventDefault();
+        openPreviews(focusedItem, { focus: true });
+        return;
+      }
       if (event.key === 'Escape' && depth > 0 && phase === 'idle') {
         event.stopPropagation();
         navigateBack();
@@ -181,7 +352,18 @@ export const DockBar = ({
       }
       roving.handleKeyDown(event);
     },
-    [depth, phase, navigateBack, roving],
+    [
+      depth,
+      phase,
+      navigateBack,
+      roving,
+      isInPreviewsPanel,
+      previews.openId,
+      closePreviews,
+      levelItems,
+      previewSide,
+      openPreviews,
+    ],
   );
 
   const grandparent = breadcrumb[breadcrumb.length - 2];
@@ -234,10 +416,35 @@ export const DockBar = ({
         activePathIds={activePathIds}
         tabStopId={roving.tabStopId}
         parentItemLabel={resolvedLabels.parentItem}
+        previewsItemLabel={resolvedLabels.previewsItem}
+        openPreviewsId={openPreviewsItem?.id ?? null}
+        previewsPanelId={previewsPanelId}
+        onPreviewsHover={handlePreviewsHover}
+        onPreviewsLeave={previews.leave}
         itemClassName={itemClassName}
         onActivate={handleActivate}
         onAnimationEnd={handleLevelAnimationEnd}
       />
+      {openPreviewsItem ? (
+        <DockBarPreviews
+          key={openPreviewsItem.id}
+          id={previewsPanelId}
+          item={openPreviewsItem}
+          previews={getPreviews(openPreviewsItem)}
+          side={previewSide}
+          getAnchor={getPreviewsAnchor}
+          pinned={previews.pinned}
+          autoFocus={previewsFocusId === openPreviewsItem.id}
+          instant={instant}
+          panelLabel={resolvedLabels.previewsPanel}
+          closeLabel={resolvedLabels.closePreview}
+          onSelectPreview={handleSelectPreview}
+          onClosePreview={handleClosePreview}
+          onRequestClose={closePreviews}
+          onPointerEnter={previews.cancelClose}
+          onPointerLeave={previews.leave}
+        />
+      ) : null}
       <span className={styles.visuallyHidden} role="status" aria-live="polite">
         {liveMessage}
       </span>

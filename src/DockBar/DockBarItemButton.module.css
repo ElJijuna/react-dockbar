@@ -124,6 +124,11 @@
   transform: translate(-50%, 0);
 }
 
+/* The panel's title replaces the tooltip while it is open. */
+.item[aria-expanded="true"] .label {
+  visibility: hidden;
+}
+
 [data-dockbar-orientation="vertical"] .item[data-dockbar-hovered] .label,
 [data-dockbar-orientation="vertical"] .item:focus-visible .label {
   transform: translate(0, -50%);
@@ -200,4 +205,47 @@
 
 [data-dockbar-variant="pill"] .back .icon {
   color: inherit;
+}
+
+/* Open-windows dots, in place of the active dot (which they take the accent color of). */
+.running {
+  position: absolute;
+  bottom: calc(var(--dockbar-padding) * -0.5 - 2px);
+  left: 50%;
+  display: flex;
+  gap: 3px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.runningDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--dockbar-fg-muted);
+}
+
+.item[data-dockbar-active] .runningDot {
+  background: var(--dockbar-active-indicator, var(--dockbar-accent));
+}
+
+.item[data-dockbar-running][data-dockbar-active]::after {
+  display: none;
+}
+
+[data-dockbar-orientation="vertical"] .running {
+  bottom: auto;
+  top: 50%;
+  left: calc(var(--dockbar-padding) * -0.5 - 2px);
+  flex-direction: column;
+  transform: translateY(-50%);
+}
+
+/* Pill: the dots sit inside the bar's padding, under the item. */
+[data-dockbar-variant="pill"] .running {
+  bottom: calc(var(--dockbar-padding) * -0.5 - 1px);
+}
+
+[data-dockbar-variant="pill"] .item[data-dockbar-active] .runningDot {
+  background: var(--dockbar-fg);
 }

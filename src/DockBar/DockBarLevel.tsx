@@ -28,6 +28,12 @@ export interface DockBarLevelProps {
   /** Id of the single item reachable with Tab (roving tabindex). */
   tabStopId: string | null;
   parentItemLabel: Required<DockBarLabels>['parentItem'];
+  previewsItemLabel: Required<DockBarLabels>['previewsItem'];
+  /** Item whose previews panel is open, and that panel's element id. */
+  openPreviewsId: string | null;
+  previewsPanelId: string;
+  onPreviewsHover: (item: DockBarItem) => void;
+  onPreviewsLeave: () => void;
   itemClassName?: DockBarProps['itemClassName'];
   onActivate: (
     item: DockBarItem,
@@ -50,13 +56,22 @@ export const DockBarLevel = ({
   activePathIds,
   tabStopId,
   parentItemLabel,
+  previewsItemLabel,
+  openPreviewsId,
+  previewsPanelId,
+  onPreviewsHover,
+  onPreviewsLeave,
   itemClassName,
   onActivate,
   onAnimationEnd,
 }: DockBarLevelProps): ReactElement => {
   const activeId = activePathIds[activePathIds.length - 1];
   const levelRef = useRef<HTMLDivElement>(null);
-  const magnify = useMagnify(magnification, variant, orientation, levelRef);
+  // Hold the magnification while a previews panel is open, so its item doesn't shrink away
+  // under the panel as the pointer moves into it.
+  const magnify = useMagnify(magnification, variant, orientation, levelRef, {
+    hold: openPreviewsId !== null,
+  });
   const { invalidate } = magnify;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `items` is the trigger — adding, removing or reordering items in place moves them, so cached positions must be dropped.
@@ -102,6 +117,11 @@ export const DockBarLevel = ({
             isBack={false}
             tabIndex={item.id === tabStopId ? 0 : -1}
             parentItemLabel={parentItemLabel}
+            previewsItemLabel={previewsItemLabel}
+            previewsOpen={item.id === openPreviewsId}
+            previewsPanelId={previewsPanelId}
+            onPreviewsHover={onPreviewsHover}
+            onPreviewsLeave={onPreviewsLeave}
             hovered={magnify.hoveredIndex === index}
             active={item.id === activeId}
             containsActive={item.id !== activeId && activePathIds.includes(item.id)}
