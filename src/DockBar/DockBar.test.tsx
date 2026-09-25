@@ -412,6 +412,12 @@ describe('DockBar', () => {
     });
   });
 
+  it('renders the pill toolbar by default', () => {
+    render(<DockBar items={flatItems()} />);
+
+    expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-variant', 'pill');
+  });
+
   it('reflects the colorScheme and variant props as data attributes on the root element', () => {
     const { rerender } = render(<DockBar items={flatItems()} colorScheme="dark" variant="solid" />);
     expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-color-scheme', 'dark');
@@ -625,7 +631,7 @@ describe('DockBar', () => {
 
     describe('variant defaults', () => {
       it('uses the pronounced dock magnification for glass and solid', async () => {
-        const { container, unmount } = render(<DockBar items={flatItems()} />);
+        const { container, unmount } = render(<DockBar items={flatItems()} variant="glass" />);
         mockItemRects(container);
         await pointerAt(container, 85);
         expect(scaleOf('Mail')).toBe(1.6);
@@ -637,8 +643,8 @@ describe('DockBar', () => {
         expect(scaleOf('Mail')).toBe(1.6);
       });
 
-      it('uses a subtler magnification for the pill toolbar', async () => {
-        const { container } = render(<DockBar items={flatItems()} variant="pill" />);
+      it('uses a subtler magnification for the default pill toolbar', async () => {
+        const { container } = render(<DockBar items={flatItems()} />);
         mockItemRects(container);
         await pointerAt(container, 85);
 

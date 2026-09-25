@@ -1,7 +1,7 @@
 {
     "name": "react-dockbar",
     "version": "1.2.0",
-    "description": "A macOS-Dock-style, animated, drill-down app bar for React 18/19, with glass light/dark themes.",
+    "description": "A macOS-Dock-style, animated, drill-down app bar for React 18/19, with pill, glass and solid light/dark themes.",
     "license": "MIT",
     "author": "pilmee <pilmee@gmail.com>",
     "repository": {

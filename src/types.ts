@@ -88,11 +88,11 @@ export interface DockBarNavigateEvent {
 
 export type DockBarColorScheme = 'light' | 'dark' | 'auto';
 /**
+ * - `pill` (default): compact opaque rounded toolbar, small icons, filled active item.
  * - `glass`: translucent frosted panel, dot active indicator.
  * - `solid`: opaque panel, dot active indicator.
- * - `pill`: compact opaque rounded toolbar, small icons, filled active item.
  */
-export type DockBarVariant = 'glass' | 'solid' | 'pill';
+export type DockBarVariant = 'pill' | 'glass' | 'solid';
 export type DockBarSize = 'sm' | 'md' | 'lg';
 export type DockBarOrientation = 'horizontal' | 'vertical';
 /**
@@ -174,6 +174,7 @@ export interface DockBarProps {
    */
   openActiveLevel?: boolean;
   colorScheme?: DockBarColorScheme;
+  /** Visual style. Default `'pill'`. */
   variant?: DockBarVariant;
   size?: DockBarSize;
   orientation?: DockBarOrientation;

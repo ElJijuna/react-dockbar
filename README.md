@@ -21,8 +21,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A522.13-5fa04e?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 
 A macOS-Dock-style, animated app bar for React 18 and 19: hover magnification, drill-down
-navigation with an auto-inserted Back item, and a glass/translucent theme configurable for
-light and dark.
+navigation with an auto-inserted Back item, and pill, glass and solid themes for light and
+dark.
 
 ![react-dockbar pill toolbar with a tooltip over the hovered item](https://raw.githubusercontent.com/ElJijuna/react-dockbar/main/docs/images/pill-toolbar-light.png)
 
@@ -85,8 +85,6 @@ function AppMenuBar() {
         },
       ]}
       colorScheme="auto"
-      variant="pill"
-      position="bottom-center"
     />
   );
 }
@@ -136,10 +134,12 @@ function AppMenuBar() {
   bottom dock) opens it and focuses the front window, arrows move between windows, `Escape`
   closes it and returns focus to the item. Style it with `--dockbar-preview-width`,
   `--dockbar-preview-aspect-ratio`, `--dockbar-preview-radius` and `--dockbar-preview-bg`.
-- **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` (`'glass' | 'solid' | 'pill'`)
-  props switch themes (`pill` is a compact rounded toolbar with a filled active item); deeper customization is available through CSS custom properties
-  (`--dockbar-bg`, `--dockbar-blur`, `--dockbar-accent`, `--dockbar-item-size`, ...) documented
-  in `src/theme/tokens.css`.
+- **Theming**: `colorScheme` (`'light' | 'dark' | 'auto'`) and `variant` switch themes:
+  `'pill'` (default: a compact rounded toolbar with a filled active item), `'glass'` (a
+  translucent macOS-style dock with a dot under the active item) or `'solid'` (the same dock,
+  opaque). Deeper customization is available through CSS custom properties (`--dockbar-bg`,
+  `--dockbar-blur`, `--dockbar-accent`, `--dockbar-item-size`, ...) documented in
+  `src/theme/tokens.css`.
 - **Accessibility**: renders as a `role="toolbar"` of native `<button>`/`<a>` elements, moves
   focus to/from the Back button on navigation, announces level changes via a live region, and
   respects `prefers-reduced-motion` (or force it via the `reducedMotion` prop). Keyboard follows
@@ -174,6 +174,18 @@ language controls its own grammar and plurals. Any builder you omit falls back t
   }}
 />
 ```
+
+## Migrating from 1.x
+
+2.0 changes two defaults. To keep the 1.x look and layout, pass both props:
+
+```tsx
+<DockBar items={items} variant="glass" position="inline" />
+```
+
+- `variant` now defaults to `'pill'` (was `'glass'`).
+- `position` now defaults to `'bottom-center'`, pinned to the viewport (1.x rendered it in the
+  document flow, which is `position="inline"` now). This change already shipped in 1.2.0.
 
 ## Development
 
