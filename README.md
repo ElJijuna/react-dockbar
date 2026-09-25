@@ -99,6 +99,21 @@ function AppMenuBar() {
   `'inline'` to render it in the document flow inside your own layout. Tooltips and
   magnification open away from the edge. Tune the edge distance with `--dockbar-offset`
   (default `16px`) and stacking with `--dockbar-z-index` (default `1000`).
+- **Reserving space for the pinned dock**: while pinned, the dock publishes the space it takes
+  from its edge (distance to the edge plus its thickness) on `<html>` as
+  `--dockbar-inset-bottom`, `--dockbar-inset-top`, `--dockbar-inset-left` or
+  `--dockbar-inset-right`. It only changes when the dock's size does (not while items
+  magnify) and is removed on unmount or with `position="inline"`. Use it so content scrolls
+  clear of the dock, and so focused or anchored elements are not scrolled behind it:
+
+  ```css
+  body {
+    padding-bottom: var(--dockbar-inset-bottom, 0px);
+  }
+  html {
+    scroll-padding-bottom: var(--dockbar-inset-bottom, 0px);
+  }
+  ```
 - **Flat items**: leaf items call `onSelect({ item, path, nativeEvent })` when activated.
 - **Nested items**: clicking an item with `children` shrinks the current level toward the
   center, then expands into that item's children. A circular Back button appears in its own

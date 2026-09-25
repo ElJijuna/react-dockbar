@@ -240,6 +240,46 @@ export const PillToolbarWithWindows: Story = {
   render: (args) => <PillToolbarWithWindowsRender {...args} />,
 };
 
+/**
+ * A long page under the pinned dock. The page reserves the dock's space with
+ * `padding-bottom: var(--dockbar-inset-bottom, 0px)`, so its last lines scroll clear of it.
+ */
+const PARAGRAPHS = Array.from(
+  { length: 12 },
+  (_, index) =>
+    `Paragraph ${index + 1}. Scroll to the end: the last paragraph stops above the dock instead of hiding behind it.`,
+);
+
+export const ReservedSpace: Story = {
+  parameters: { docsFrameHeight: 360 },
+  args: {
+    items: pillItems,
+    defaultActiveId: 'home',
+    ariaLabel: 'Toolbar',
+  },
+  render: (args) => (
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'auto',
+          padding: '24px 48px',
+          paddingBottom: 'var(--dockbar-inset-bottom, 0px)',
+          font: '15px/1.6 system-ui, sans-serif',
+          color: 'light-dark(#333, #ddd)',
+        }}
+      >
+        {PARAGRAPHS.map((text) => (
+          <p key={text}>{text}</p>
+        ))}
+        <p style={{ fontWeight: 600 }}>Last paragraph — fully visible.</p>
+      </div>
+      <DockBar {...args} />
+    </>
+  ),
+};
+
 export const FlatDock: Story = {
   args: {
     items: flatItems,

@@ -22,6 +22,7 @@ import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect';
 import { usePreviewsState } from '../hooks/usePreviewsState';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useRovingFocus } from '../hooks/useRovingFocus';
+import { useViewportInset } from '../hooks/useViewportInset';
 import type { DockBarItem, DockBarNavigateEvent, DockBarPreview, DockBarProps } from '../types';
 import { findItemPath } from '../utils/findItemPath';
 import { getPreviews } from '../utils/getPreviews';
@@ -165,6 +166,7 @@ export const DockBar = ({
       )
     : undefined;
   const previewSide = resolvePreviewSide(position, orientation);
+  useViewportInset(containerRef, position, orientation);
   /** Item whose panel should take focus when it opens (opened from the keyboard). */
   const [previewsFocusId, setPreviewsFocusId] = useState<string | null>(null);
 
