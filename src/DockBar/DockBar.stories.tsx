@@ -372,6 +372,10 @@ export const SpanishLabels: Story = {
       backTo: (label) => `Volver a ${label}`,
       enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
       returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+      badge: (name, badge) =>
+        typeof badge === 'number'
+          ? `${name}, ${badge} ${badge === 1 ? 'notificación' : 'notificaciones'}`
+          : `${name}, ${badge}`,
       previewsItem: (label, count) =>
         `${label}, ${count} ${count === 1 ? 'ventana abierta' : 'ventanas abiertas'}`,
       previewsPanel: (label) => `Ventanas de ${label}`,

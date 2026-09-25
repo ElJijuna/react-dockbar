@@ -41,6 +41,10 @@ export const DEFAULT_LABELS: Required<DockBarLabels> = {
   enteredLevel: (label, depth) => `${label}, level ${depth + 1}`,
   returnedTo: (label) => (label ? `Back to ${label}` : 'Back to main menu'),
   previewsItem: (label, count) => `${label}, ${count} open ${count === 1 ? 'window' : 'windows'}`,
+  badge: (name, badge) =>
+    typeof badge === 'number'
+      ? `${name}, ${badge} ${badge === 1 ? 'notification' : 'notifications'}`
+      : `${name}, ${badge}`,
   previewsPanel: (label) => `${label} windows`,
   closePreview: (title) => `Close ${title}`,
 };

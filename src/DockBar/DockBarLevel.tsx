@@ -29,6 +29,7 @@ export interface DockBarLevelProps {
   tabStopId: string | null;
   parentItemLabel: Required<DockBarLabels>['parentItem'];
   previewsItemLabel: Required<DockBarLabels>['previewsItem'];
+  badgeLabel: Required<DockBarLabels>['badge'];
   /** Item whose previews panel is open, and that panel's element id. */
   openPreviewsId: string | null;
   previewsPanelId: string;
@@ -57,6 +58,7 @@ export const DockBarLevel = ({
   tabStopId,
   parentItemLabel,
   previewsItemLabel,
+  badgeLabel,
   openPreviewsId,
   previewsPanelId,
   onPreviewsHover,
@@ -118,6 +120,7 @@ export const DockBarLevel = ({
             tabIndex={item.id === tabStopId ? 0 : -1}
             parentItemLabel={parentItemLabel}
             previewsItemLabel={previewsItemLabel}
+            badgeLabel={badgeLabel}
             previewsOpen={item.id === openPreviewsId}
             previewsPanelId={previewsPanelId}
             onPreviewsHover={onPreviewsHover}

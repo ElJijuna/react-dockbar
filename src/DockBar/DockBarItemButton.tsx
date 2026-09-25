@@ -23,6 +23,8 @@ export interface DockBarItemButtonProps {
   parentItemLabel?: Required<DockBarLabels>['parentItem'];
   /** Builds the accessible name of items with open windows. */
   previewsItemLabel?: Required<DockBarLabels>['previewsItem'];
+  /** Adds the badge to the accessible name. */
+  badgeLabel?: Required<DockBarLabels>['badge'];
   /** This item's previews panel is open; `previewsPanelId` is the panel's element id. */
   previewsOpen?: boolean;
   previewsPanelId?: string;
@@ -48,6 +50,7 @@ export const DockBarItemButton = ({
   ariaLabel,
   parentItemLabel = DEFAULT_LABELS.parentItem,
   previewsItemLabel = DEFAULT_LABELS.previewsItem,
+  badgeLabel = DEFAULT_LABELS.badge,
   previewsOpen = false,
   previewsPanelId,
   onPreviewsHover,
@@ -67,14 +70,22 @@ export const DockBarItemButton = ({
   const state: DockBarItemState = { hovered, isBack, active, containsActive, pressed };
   const childCount = item.children?.filter((entry) => !isSeparator(entry)).length ?? 0;
   const previewCount = isBack ? 0 : getPreviews(item).length;
-  const resolvedAriaLabel =
-    ariaLabel ??
-    item['aria-label'] ??
-    (isParent
-      ? parentItemLabel(item.label, childCount)
-      : previewCount > 0
-        ? previewsItemLabel(item.label, previewCount)
-        : item.label);
+  const baseName = isParent
+    ? parentItemLabel(item.label, childCount)
+    : previewCount > 0
+      ? previewsItemLabel(item.label, previewCount)
+      : item.label;
+  // The badge itself is aria-hidden, so its meaning goes into the name — only while it is shown
+  // (a falsy badge, e.g. 0, is not rendered). A non-text badge needs `item.badgeLabel`.
+  const { badge } = item;
+  const namedWithBadge = !badge
+    ? baseName
+    : item.badgeLabel
+      ? `${baseName}, ${item.badgeLabel}`
+      : typeof badge === 'number' || typeof badge === 'string'
+        ? badgeLabel(baseName, badge)
+        : baseName;
+  const resolvedAriaLabel = ariaLabel ?? item['aria-label'] ?? namedWithBadge;
   const extraClassName =
     typeof itemClassName === 'function' ? itemClassName(item, state) : itemClassName;
   const className = [styles.item, isParent && styles.parent, isBack && styles.back, extraClassName]

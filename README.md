@@ -115,6 +115,10 @@ function AppMenuBar() {
   neighbors, matching macOS Dock behavior. Defaults depend on the variant (pronounced for
   `glass`/`solid`, subtle for `pill`); pass `magnification={{ scale, distance }}` to override
   any part of it, or `false` to disable.
+- **Badges**: `badge` shows a count or short text on the item, and it is included in the
+  accessible name ("Mail, 3 notifications"; wording set by `labels.badge`). For a badge that is
+  not text, such as a dot or an icon, pass `badgeLabel` (e.g. `'unread messages'`) so screen
+  readers get it too. A falsy badge (e.g. `0`) is neither shown nor announced.
 - **Separators**: add `{ type: 'separator', id: 'sep-1' }` entries to split items into groups.
 - **Toggle items**: give a leaf item `pressed: boolean` to make it a toggle button
   (`aria-pressed`) — e.g. panels that can be open at the same time. It is controlled: flip it in
@@ -157,6 +161,10 @@ language controls its own grammar and plurals. Any builder you omit falls back t
     backTo: (label) => `Volver a ${label}`,
     enteredLevel: (label, depth) => `${label}, nivel ${depth + 1}`,
     returnedTo: (label) => (label ? `De vuelta en ${label}` : 'De vuelta en el menú principal'),
+    badge: (name, badge) =>
+      typeof badge === 'number'
+        ? `${name}, ${badge} ${badge === 1 ? 'notificación' : 'notificaciones'}`
+        : `${name}, ${badge}`,
     previewsItem: (label, count) =>
       `${label}, ${count} ${count === 1 ? 'ventana abierta' : 'ventanas abiertas'}`,
     previewsPanel: (label) => `Ventanas de ${label}`,

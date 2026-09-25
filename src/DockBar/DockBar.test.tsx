@@ -336,6 +336,82 @@ describe('DockBar', () => {
     });
   });
 
+  describe('badge', () => {
+    const badgeItem = (extra: Partial<DockBarItem>): DockBarItem[] => [
+      { id: 'mail', label: 'Mail', icon: <span>M</span>, ...extra },
+    ];
+
+    it('announces a number or text badge in the accessible name', () => {
+      const { rerender } = render(<DockBar items={badgeItem({ badge: 3 })} />);
+      expect(screen.getByRole('button', { name: 'Mail, 3 notifications' })).toBeInTheDocument();
+
+      rerender(<DockBar items={badgeItem({ badge: 1 })} />);
+      expect(screen.getByRole('button', { name: 'Mail, 1 notification' })).toBeInTheDocument();
+
+      rerender(<DockBar items={badgeItem({ badge: 'New' })} />);
+      expect(screen.getByRole('button', { name: 'Mail, New' })).toBeInTheDocument();
+    });
+
+    it('does not announce a badge that is not shown', () => {
+      render(<DockBar items={badgeItem({ badge: 0, badgeLabel: 'no messages' })} />);
+
+      expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
+    });
+
+    it('uses badgeLabel for a badge that is not text', () => {
+      render(
+        <DockBar
+          items={badgeItem({ badge: <span className="dot" />, badgeLabel: 'unread messages' })}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Mail, unread messages' })).toBeInTheDocument();
+    });
+
+    it('leaves a non-text badge without badgeLabel out of the name', () => {
+      render(<DockBar items={badgeItem({ badge: <span className="dot" /> })} />);
+
+      expect(screen.getByRole('button', { name: 'Mail' })).toBeInTheDocument();
+    });
+
+    it('adds the badge after the submenu description of a parent item', () => {
+      render(
+        <DockBar
+          items={[
+            {
+              id: 'settings',
+              label: 'Settings',
+              icon: <span>S</span>,
+              badge: 2,
+              children: settingsChildren,
+            },
+          ]}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', { name: 'Settings, opens 2 more options, 2 notifications' }),
+      ).toBeInTheDocument();
+    });
+
+    it('builds the text with the labels.badge translation', () => {
+      render(
+        <DockBar
+          items={badgeItem({ badge: 3 })}
+          labels={{ badge: (name, badge) => `${name}, ${badge} sin leer` }}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Mail, 3 sin leer' })).toBeInTheDocument();
+    });
+
+    it('lets aria-label override the composed name', () => {
+      render(<DockBar items={badgeItem({ badge: 3, 'aria-label': 'Inbox' })} />);
+
+      expect(screen.getByRole('button', { name: 'Inbox' })).toBeInTheDocument();
+    });
+  });
+
   it('reflects the colorScheme and variant props as data attributes on the root element', () => {
     const { rerender } = render(<DockBar items={flatItems()} colorScheme="dark" variant="solid" />);
     expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-color-scheme', 'dark');
@@ -627,7 +703,7 @@ describe('DockBar', () => {
       ];
       rerender(<DockBar items={updated} />);
 
-      expect(screen.getByRole('button', { name: 'Wi-Fi 6E' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Wi-Fi 6E, 2 notifications' })).toBeInTheDocument();
     });
 
     it('falls back to the deepest level that still exists when the current parent is removed', async () => {

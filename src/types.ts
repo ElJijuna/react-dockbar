@@ -15,6 +15,11 @@ export interface DockBarItem {
   disabled?: boolean;
   badge?: ReactNode;
   /**
+   * Screen-reader text of the badge, e.g. "3 unread messages". Needed when `badge` is not plain
+   * text or a number (a dot, an icon); otherwise `labels.badge` builds it from the value.
+   */
+  badgeLabel?: string;
+  /**
    * Makes a leaf button a toggle (`aria-pressed`), e.g. for panels that can be open at the same
    * time. Controlled: flip it yourself in `onSelect`. Toggling never changes the active item.
    * Ignored on items with `children` or `href`.
@@ -131,6 +136,11 @@ export interface DockBarLabels {
   returnedTo?: (label: string | null) => string;
   /** Accessible name of an item with open windows. Default: "Mail, 2 open windows". */
   previewsItem?: (label: string, count: number) => string;
+  /**
+   * Adds a text or number `badge` to the item's accessible name; `name` is the name without
+   * it. Default: "Mail, 3 notifications" / "Mail, New". Not used when the item has `badgeLabel`.
+   */
+  badge?: (name: string, badge: string | number) => string;
   /** Accessible name of the previews panel. Default: "Mail windows". */
   previewsPanel?: (label: string) => string;
   /** Accessible name of a thumbnail's close button. Default: "Close Inbox". */

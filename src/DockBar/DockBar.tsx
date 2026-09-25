@@ -417,6 +417,7 @@ export const DockBar = ({
         tabStopId={roving.tabStopId}
         parentItemLabel={resolvedLabels.parentItem}
         previewsItemLabel={resolvedLabels.previewsItem}
+        badgeLabel={resolvedLabels.badge}
         openPreviewsId={openPreviewsItem?.id ?? null}
         previewsPanelId={previewsPanelId}
         onPreviewsHover={handlePreviewsHover}
