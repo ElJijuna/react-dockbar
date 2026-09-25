@@ -22,6 +22,7 @@ export default defineConfig({
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],
       output: {
+        banner: "'use client';",
         exports: 'named',
         assetFileNames: (assetInfo) =>
           assetInfo.name?.endsWith('.css')

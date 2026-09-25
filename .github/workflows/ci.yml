@@ -38,5 +38,13 @@ jobs:
         run: npm run lint
       - if: matrix.react == '19'
         run: npm run build
+      # Without the directive as the first statement, importing the dock from a React Server
+      # Component (e.g. Next.js App Router) fails.
+      - name: Check the "use client" directive
+        if: matrix.react == '19'
+        run: |
+          for file in dist/react-dockbar.js dist/react-dockbar.cjs; do
+            head -c 13 "$file" | grep -qx '"use client";' || { echo "::error file=$file::missing \"use client\" directive"; exit 1; }
+          done
       - if: matrix.react == '19'
         run: npm run build:storybook
