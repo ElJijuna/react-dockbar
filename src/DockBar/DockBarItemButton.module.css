@@ -78,6 +78,13 @@
     transform 120ms ease-out;
 }
 
+/* Near the top edge the tooltip opens below the item instead. */
+:where([data-dockbar-position^="top-"]:not([data-dockbar-orientation="vertical"])) .label {
+  bottom: auto;
+  top: calc(100% + 10px);
+  transform: translate(-50%, -4px);
+}
+
 .back .icon {
   color: var(--dockbar-accent);
 }
@@ -86,11 +93,29 @@
   bottom: calc(100% + var(--dockbar-padding) + 8px);
 }
 
+:where(
+    [data-dockbar-position^="top-"]:not([data-dockbar-orientation="vertical"])
+  )[data-dockbar-variant="pill"]
+  .label {
+  bottom: auto;
+  top: calc(100% + var(--dockbar-padding) + 8px);
+}
+
 [data-dockbar-orientation="vertical"] .label {
   bottom: auto;
   top: 50%;
   left: calc(100% + 10px);
   transform: translate(-4px, -50%);
+}
+
+/* Near the right edge a vertical dock opens its tooltips to the left. */
+:where(
+  [data-dockbar-position="right-center"],
+  [data-dockbar-position$="-right"]
+)[data-dockbar-orientation="vertical"] .label {
+  left: auto;
+  right: calc(100% + 10px);
+  transform: translate(4px, -50%);
 }
 
 .item[data-dockbar-hovered] .label,

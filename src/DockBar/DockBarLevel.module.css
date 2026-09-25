@@ -18,12 +18,25 @@
   transform: scale(1);
 }
 
+/* Magnified items grow away from the edge the dock is pinned to. */
+:where([data-dockbar-position^="top-"]:not([data-dockbar-orientation="vertical"])) .level {
+  align-items: flex-start;
+}
+
 [data-dockbar-orientation="vertical"] .level {
   flex-direction: column;
   align-items: flex-start;
   height: auto;
   width: var(--dockbar-item-size);
   padding: var(--dockbar-padding-inline, var(--dockbar-padding)) var(--dockbar-padding);
+}
+
+:where(
+    [data-dockbar-position="right-center"],
+    [data-dockbar-position$="-right"]
+  )[data-dockbar-orientation="vertical"]
+  .level {
+  align-items: flex-end;
 }
 
 /* Pill items grow symmetrically so magnification stays inside the rounded bar. */

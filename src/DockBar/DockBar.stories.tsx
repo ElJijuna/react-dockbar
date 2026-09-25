@@ -1,69 +1,132 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import {
+  MdBluetooth,
   MdBugReport,
   MdCallSplit,
   MdChat,
   MdComment,
+  MdFolder,
   MdForum,
   MdHistory,
   MdHome,
   MdImage,
   MdImageSearch,
   MdInventory2,
+  MdLan,
   MdLock,
+  MdMail,
   MdManageSearch,
   MdMessage,
+  MdMonitor,
+  MdMusicNote,
+  MdPhotoLibrary,
+  MdPublic,
   MdRocketLaunch,
   MdRouter,
   MdSearch,
+  MdSettings,
   MdShield,
+  MdTerminal,
   MdVpnKey,
+  MdWifi,
 } from 'react-icons/md';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import type { DockBarEntry, DockBarItem, DockBarProps } from '../types';
+import type { DockBarEntry, DockBarItem, DockBarPosition, DockBarProps } from '../types';
 import { DockBar } from './DockBar';
 
-const icon = (glyph: string) => <span>{glyph}</span>;
+// All stories share the Pill Toolbar look (pill variant, Material icons, bottom-center),
+// which is the reference for how the component should look by default.
 
-const flatItems: DockBarItem[] = [
-  { id: 'finder', label: 'Finder', icon: icon('🗂️'), onSelect: fn() },
-  { id: 'mail', label: 'Mail', icon: icon('✉️'), badge: 3, onSelect: fn() },
-  { id: 'photos', label: 'Photos', icon: icon('🖼️'), onSelect: fn() },
-  { id: 'music', label: 'Music', icon: icon('🎵'), onSelect: fn() },
-  { id: 'terminal', label: 'Terminal', icon: icon('⌨️'), onSelect: fn() },
+const pillItems: DockBarEntry[] = [
+  { id: 'search', label: 'Search', icon: <MdSearch />, onSelect: fn() },
+  { id: 'home', label: 'Home', icon: <MdHome />, onSelect: fn() },
+  { id: 'branches', label: 'Branches', icon: <MdCallSplit />, onSelect: fn() },
+  { id: 'deploy', label: 'Deploy', icon: <MdRocketLaunch />, onSelect: fn() },
+  { type: 'separator', id: 'sep-1' },
+  { id: 'secrets', label: 'Secrets', icon: <MdVpnKey />, disabled: true },
+  { type: 'separator', id: 'sep-2' },
+  { id: 'history', label: 'History', icon: <MdHistory />, onSelect: fn() },
+  { type: 'separator', id: 'sep-3' },
+  { id: 'packages', label: 'Packages', icon: <MdInventory2 />, onSelect: fn() },
+  { id: 'issues', label: 'Issues', icon: <MdBugReport />, onSelect: fn() },
+  { id: 'inspect', label: 'Inspect', icon: <MdManageSearch />, onSelect: fn() },
+  {
+    id: 'security',
+    label: 'Security',
+    icon: <MdShield />,
+    children: [
+      { id: 'vpn', label: 'VPN', icon: <MdLock />, onSelect: fn() },
+      { id: 'firewall', label: 'Firewall', icon: <MdRouter />, onSelect: fn() },
+    ],
+  },
+  { id: 'image-search', label: 'Image search', icon: <MdImageSearch />, onSelect: fn() },
+  { id: 'images', label: 'Images', icon: <MdImage />, onSelect: fn() },
+  { type: 'separator', id: 'sep-4' },
+  { id: 'chat', label: 'Chat', icon: <MdChat />, onSelect: fn() },
+  { id: 'comments', label: 'Comments', icon: <MdComment />, onSelect: fn() },
+  { id: 'forum', label: 'Forum', icon: <MdForum />, onSelect: fn() },
+  { id: 'messages', label: 'Messages', icon: <MdMessage />, onSelect: fn() },
 ];
 
-const nestedItems: DockBarItem[] = [
-  { id: 'finder', label: 'Finder', icon: icon('🗂️'), onSelect: fn() },
-  { id: 'mail', label: 'Mail', icon: icon('✉️'), onSelect: fn() },
+const flatItems: DockBarItem[] = [
+  { id: 'files', label: 'Files', icon: <MdFolder />, onSelect: fn() },
+  { id: 'mail', label: 'Mail', icon: <MdMail />, badge: 3, onSelect: fn() },
+  { id: 'photos', label: 'Photos', icon: <MdPhotoLibrary />, onSelect: fn() },
+  { id: 'music', label: 'Music', icon: <MdMusicNote />, onSelect: fn() },
+  { id: 'terminal', label: 'Terminal', icon: <MdTerminal />, onSelect: fn() },
+];
+
+const nestedItems: DockBarEntry[] = [
+  { id: 'home', label: 'Home', icon: <MdHome />, onSelect: fn() },
+  { id: 'mail', label: 'Mail', icon: <MdMail />, onSelect: fn() },
+  { type: 'separator', id: 'sep-1' },
   {
     id: 'settings',
     label: 'Settings',
-    icon: icon('⚙️'),
+    icon: <MdSettings />,
     children: [
-      { id: 'wifi', label: 'Wi-Fi', icon: icon('📶'), onSelect: fn() },
-      { id: 'bluetooth', label: 'Bluetooth', icon: icon('🔵'), onSelect: fn() },
+      { id: 'wifi', label: 'Wi-Fi', icon: <MdWifi />, onSelect: fn() },
+      { id: 'bluetooth', label: 'Bluetooth', icon: <MdBluetooth />, onSelect: fn() },
       {
         id: 'network',
         label: 'Network',
-        icon: icon('🌐'),
+        icon: <MdLan />,
         children: [
-          { id: 'vpn', label: 'VPN', icon: icon('🔒'), onSelect: fn() },
-          { id: 'proxy', label: 'Proxy', icon: icon('🛰️'), onSelect: fn() },
+          { id: 'vpn', label: 'VPN', icon: <MdLock />, onSelect: fn() },
+          { id: 'proxy', label: 'Proxy', icon: <MdPublic />, onSelect: fn() },
         ],
       },
-      { id: 'display', label: 'Display', icon: icon('🖥️'), onSelect: fn() },
+      { id: 'display', label: 'Display', icon: <MdMonitor />, onSelect: fn() },
     ],
   },
 ];
 
+const POSITIONS: DockBarPosition[] = [
+  'bottom-center',
+  'bottom-left',
+  'bottom-right',
+  'top-center',
+  'top-left',
+  'top-right',
+  'left-center',
+  'right-center',
+  'inline',
+];
+
+const SIDE_POSITIONS = new Set<DockBarPosition>(['left-center', 'right-center']);
+
 const meta: Meta<typeof DockBar> = {
   title: 'DockBar',
   component: DockBar,
-  parameters: { layout: 'centered' },
+  args: {
+    variant: 'pill',
+    position: 'bottom-center',
+  },
   argTypes: {
-    variant: { control: 'radio', options: ['glass', 'solid', 'pill'] },
+    variant: { control: 'radio', options: ['pill', 'glass', 'solid'] },
+    position: { control: 'select', options: POSITIONS },
+    orientation: { control: 'radio', options: ['horizontal', 'vertical'] },
     size: { control: 'radio', options: ['sm', 'md', 'lg'] },
     colorScheme: { control: 'radio', options: ['auto', 'light', 'dark'] },
     animationDuration: { control: { type: 'range', min: 0, max: 800, step: 20 } },
@@ -74,10 +137,35 @@ const meta: Meta<typeof DockBar> = {
 export default meta;
 type Story = StoryObj<typeof DockBar>;
 
+const PANEL_IDS = new Set(['comments', 'forum', 'messages']);
+
+/** Pill toolbar whose chat panels are toggles: several can be on next to the active item. */
+const PillToolbarWithPanels = (args: DockBarProps) => {
+  const [openPanels, setOpenPanels] = useState<string[]>(['forum', 'messages']);
+  const togglePanel = (id: string) =>
+    setOpenPanels((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  const items = args.items.map((entry) =>
+    entry.type !== 'separator' && PANEL_IDS.has(entry.id)
+      ? { ...entry, pressed: openPanels.includes(entry.id), onSelect: () => togglePanel(entry.id) }
+      : entry,
+  );
+  return <DockBar {...args} items={items} />;
+};
+
+/** Compact toolbar theme: white pill, grouped icons with separators, filled active and pressed items. */
+export const PillToolbar: Story = {
+  args: {
+    items: pillItems,
+    defaultActiveId: 'image-search',
+    ariaLabel: 'Toolbar',
+  },
+  render: (args) => <PillToolbarWithPanels {...args} />,
+};
+
 export const FlatDock: Story = {
   args: {
     items: flatItems,
-    defaultActiveId: 'finder',
+    defaultActiveId: 'files',
     ariaLabel: 'App dock',
   },
 };
@@ -117,14 +205,52 @@ export const NestedDock: Story = {
         expect(canvas.getByRole('button', { name: /Network/ })).toBeInTheDocument(),
       );
       await clickWhenSettled(/Back/);
-      await waitFor(() =>
-        expect(canvas.getByRole('button', { name: 'Finder' })).toBeInTheDocument(),
-      );
+      await waitFor(() => expect(canvas.getByRole('button', { name: 'Home' })).toBeInTheDocument());
     });
   },
 };
 
+/** Starts inside Settings → Network because the active item (VPN) lives there. */
+export const OpenActiveLevel: Story = {
+  args: {
+    items: nestedItems,
+    defaultActiveId: 'vpn',
+    openActiveLevel: true,
+    ariaLabel: 'App dock',
+  },
+};
+
+export const ReducedMotion: Story = {
+  args: {
+    items: nestedItems,
+    reducedMotion: 'always',
+    ariaLabel: 'App dock (reduced motion)',
+  },
+};
+
+/** Every `position` at once; the side positions use a vertical dock. */
+export const Positions: Story = {
+  parameters: { docsFrameHeight: 520 },
+  render: (args) => (
+    <>
+      {POSITIONS.map((position) => (
+        <DockBar
+          key={position}
+          {...args}
+          items={flatItems.slice(0, 3)}
+          position={position}
+          orientation={SIDE_POSITIONS.has(position) ? 'vertical' : 'horizontal'}
+          defaultActiveId="files"
+          ariaLabel={`Dock ${position}`}
+        />
+      ))}
+    </>
+  ),
+};
+
+/** The three variants in light and dark, rendered in the document flow (`position="inline"`). */
 export const ThemeMatrix: Story = {
+  parameters: { docsFrameHeight: 420 },
   render: () => (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
       {(['light', 'dark'] as const).map((colorScheme) => (
@@ -139,8 +265,16 @@ export const ThemeMatrix: Story = {
             background: colorScheme === 'dark' ? '#111' : '#eee',
           }}
         >
-          {(['glass', 'solid'] as const).map((variant) => (
-            <DockBar key={variant} items={flatItems} colorScheme={colorScheme} variant={variant} />
+          {(['pill', 'glass', 'solid'] as const).map((variant) => (
+            <DockBar
+              key={variant}
+              items={flatItems}
+              defaultActiveId="files"
+              colorScheme={colorScheme}
+              variant={variant}
+              position="inline"
+              ariaLabel={`${variant} ${colorScheme}`}
+            />
           ))}
         </div>
       ))}
@@ -148,86 +282,10 @@ export const ThemeMatrix: Story = {
   ),
 };
 
-export const ReducedMotion: Story = {
-  args: {
-    items: nestedItems,
-    reducedMotion: 'always',
-    ariaLabel: 'App dock (reduced motion)',
-  },
-};
-
-/** Starts inside Settings → Network because the active item (VPN) lives there. */
-export const OpenActiveLevel: Story = {
-  args: {
-    items: nestedItems,
-    defaultActiveId: 'vpn',
-    openActiveLevel: true,
-    ariaLabel: 'App dock',
-  },
-};
-
-const pillItems: DockBarEntry[] = [
-  { id: 'search', label: 'Search', icon: <MdSearch />, onSelect: fn() },
-  { id: 'home', label: 'Home', icon: <MdHome />, onSelect: fn() },
-  { id: 'branches', label: 'Branches', icon: <MdCallSplit />, onSelect: fn() },
-  { id: 'deploy', label: 'Deploy', icon: <MdRocketLaunch />, onSelect: fn() },
-  { type: 'separator', id: 'sep-1' },
-  { id: 'secrets', label: 'Secrets', icon: <MdVpnKey />, disabled: true },
-  { type: 'separator', id: 'sep-2' },
-  { id: 'history', label: 'History', icon: <MdHistory />, onSelect: fn() },
-  { type: 'separator', id: 'sep-3' },
-  { id: 'packages', label: 'Packages', icon: <MdInventory2 />, onSelect: fn() },
-  { id: 'issues', label: 'Issues', icon: <MdBugReport />, onSelect: fn() },
-  { id: 'inspect', label: 'Inspect', icon: <MdManageSearch />, onSelect: fn() },
-  {
-    id: 'security',
-    label: 'Security',
-    icon: <MdShield />,
-    children: [
-      { id: 'vpn', label: 'VPN', icon: <MdLock />, onSelect: fn() },
-      { id: 'firewall', label: 'Firewall', icon: <MdRouter />, onSelect: fn() },
-    ],
-  },
-  { id: 'image-search', label: 'Image search', icon: <MdImageSearch />, onSelect: fn() },
-  { id: 'images', label: 'Images', icon: <MdImage />, onSelect: fn() },
-  { type: 'separator', id: 'sep-4' },
-  { id: 'chat', label: 'Chat', icon: <MdChat />, onSelect: fn() },
-  { id: 'comments', label: 'Comments', icon: <MdComment />, onSelect: fn() },
-  { id: 'forum', label: 'Forum', icon: <MdForum />, onSelect: fn() },
-  { id: 'messages', label: 'Messages', icon: <MdMessage />, onSelect: fn() },
-];
-
-const PANEL_IDS = new Set(['comments', 'forum', 'messages']);
-
-/** Pill toolbar whose chat panels are toggles: several can be on next to the active item. */
-const PillToolbarWithPanels = (args: DockBarProps) => {
-  const [openPanels, setOpenPanels] = useState<string[]>(['forum', 'messages']);
-  const togglePanel = (id: string) =>
-    setOpenPanels((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
-  const items = args.items.map((entry) =>
-    entry.type !== 'separator' && PANEL_IDS.has(entry.id)
-      ? { ...entry, pressed: openPanels.includes(entry.id), onSelect: () => togglePanel(entry.id) }
-      : entry,
-  );
-  return <DockBar {...args} items={items} />;
-};
-
-/** Compact toolbar theme: white pill, grouped icons with separators, filled active and pressed items. */
-export const PillToolbar: Story = {
-  args: {
-    items: pillItems,
-    variant: 'pill',
-    defaultActiveId: 'image-search',
-    ariaLabel: 'Toolbar',
-  },
-  render: (args) => <PillToolbarWithPanels {...args} />,
-};
-
 /** Screen-reader texts translated to Spanish via `ariaLabel`, `backItem.label` and `labels`. */
 export const SpanishLabels: Story = {
   args: {
     items: pillItems,
-    variant: 'pill',
     ariaLabel: 'Barra de herramientas',
     backItem: { label: 'Atrás' },
     labels: {

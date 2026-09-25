@@ -346,6 +346,17 @@ describe('DockBar', () => {
     expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-variant', 'glass');
   });
 
+  it('pins the dock to the bottom center by default and reflects the position prop', () => {
+    const { rerender } = render(<DockBar items={flatItems()} />);
+    expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-position', 'bottom-center');
+
+    rerender(<DockBar items={flatItems()} position="top-left" />);
+    expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-position', 'top-left');
+
+    rerender(<DockBar items={flatItems()} position="inline" />);
+    expect(screen.getByRole('toolbar')).toHaveAttribute('data-dockbar-position', 'inline');
+  });
+
   describe('magnification', () => {
     // jsdom has no layout: place items 60px apart, 50px wide, so Mail's center is x=85.
     const mockItemRects = (container: HTMLElement) => {

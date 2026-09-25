@@ -11,6 +11,7 @@ export type {
   DockBarMagnificationConfig,
   DockBarNavigateEvent,
   DockBarOrientation,
+  DockBarPosition,
   DockBarProps,
   DockBarReducedMotionMode,
   DockBarSelectEvent,

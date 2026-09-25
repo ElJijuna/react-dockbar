@@ -50,7 +50,8 @@ function AppMenuBar() {
         },
       ]}
       colorScheme="auto"
-      variant="glass"
+      variant="pill"
+      position="bottom-center"
     />
   );
 }
@@ -58,6 +59,13 @@ function AppMenuBar() {
 
 ## Behavior
 
+- **Position**: by default the dock is pinned to the bottom center of the viewport
+  (`position: fixed`, respecting safe-area insets). `position` accepts `'bottom-center'`,
+  `'bottom-left'`, `'bottom-right'`, `'top-center'`, `'top-left'`, `'top-right'`,
+  `'left-center'` and `'right-center'` (pair the side ones with `orientation="vertical"`), or
+  `'inline'` to render it in the document flow inside your own layout. Tooltips and
+  magnification open away from the edge. Tune the edge distance with `--dockbar-offset`
+  (default `16px`) and stacking with `--dockbar-z-index` (default `1000`).
 - **Flat items**: leaf items call `onSelect({ item, path, nativeEvent })` when activated.
 - **Nested items**: clicking an item with `children` shrinks the current level toward the
   center, then expands into that item's children. A circular Back button appears in its own

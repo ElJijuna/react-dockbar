@@ -10,6 +10,48 @@
   flex-direction: column;
 }
 
+/* Pinned to the viewport; centering uses auto margins so no transform creates a containing block. */
+.dockbar:not([data-dockbar-position="inline"]) {
+  position: fixed;
+  z-index: var(--dockbar-z-index, 1000);
+  width: fit-content;
+  height: fit-content;
+}
+
+.dockbar[data-dockbar-position^="bottom-"] {
+  bottom: calc(var(--dockbar-offset, 16px) + env(safe-area-inset-bottom, 0px));
+}
+
+.dockbar[data-dockbar-position^="top-"] {
+  top: calc(var(--dockbar-offset, 16px) + env(safe-area-inset-top, 0px));
+}
+
+.dockbar[data-dockbar-position$="-center"]:is(
+  [data-dockbar-position^="bottom-"],
+  [data-dockbar-position^="top-"]
+) {
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+}
+
+.dockbar[data-dockbar-position$="-left"],
+.dockbar[data-dockbar-position="left-center"] {
+  left: calc(var(--dockbar-offset, 16px) + env(safe-area-inset-left, 0px));
+}
+
+.dockbar[data-dockbar-position$="-right"],
+.dockbar[data-dockbar-position="right-center"] {
+  right: calc(var(--dockbar-offset, 16px) + env(safe-area-inset-right, 0px));
+}
+
+.dockbar[data-dockbar-position="left-center"],
+.dockbar[data-dockbar-position="right-center"] {
+  top: 0;
+  bottom: 0;
+  margin-block: auto;
+}
+
 .dockbar * {
   box-sizing: border-box;
 }

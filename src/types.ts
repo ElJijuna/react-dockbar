@@ -54,6 +54,20 @@ export type DockBarColorScheme = 'light' | 'dark' | 'auto';
 export type DockBarVariant = 'glass' | 'solid' | 'pill';
 export type DockBarSize = 'sm' | 'md' | 'lg';
 export type DockBarOrientation = 'horizontal' | 'vertical';
+/**
+ * Where the dock is pinned in the viewport (`position: fixed`). `inline` keeps it in the normal
+ * document flow so it can be placed inside your own layout.
+ */
+export type DockBarPosition =
+  | 'bottom-center'
+  | 'bottom-left'
+  | 'bottom-right'
+  | 'top-center'
+  | 'top-left'
+  | 'top-right'
+  | 'left-center'
+  | 'right-center'
+  | 'inline';
 export type DockBarReducedMotionMode = 'system' | 'always' | 'never';
 
 export interface DockBarMagnificationConfig {
@@ -111,6 +125,12 @@ export interface DockBarProps {
   variant?: DockBarVariant;
   size?: DockBarSize;
   orientation?: DockBarOrientation;
+  /**
+   * Viewport position of the dock. Tune the distance to the edge with `--dockbar-offset`
+   * (default 16px) and the stacking with `--dockbar-z-index` (default 1000). Use `inline` to
+   * render it in the document flow. Default `'bottom-center'`.
+   */
+  position?: DockBarPosition;
   /**
    * `true` = the variant's default, `false` = disabled, object = overrides merged onto the
    * variant's default. Defaults: glass/solid `{ scale: 1.6, distance: 140 }`, pill
