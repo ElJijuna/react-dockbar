@@ -97,3 +97,9 @@
     transform: scale(1);
   }
 }
+
+@media (forced-colors: active) {
+  .separator {
+    background: CanvasText;
+  }
+}

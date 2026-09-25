@@ -175,3 +175,22 @@
     animation: none;
   }
 }
+
+/* Forced colors turn the transparent card borders visible: keep only the front window's. */
+@media (forced-colors: active) {
+  .select {
+    border-color: Canvas;
+  }
+
+  .select:hover {
+    border-color: CanvasText;
+  }
+
+  .select[data-dockbar-active] {
+    border-color: Highlight;
+  }
+
+  .close {
+    border: 1px solid CanvasText;
+  }
+}

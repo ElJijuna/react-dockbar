@@ -249,3 +249,49 @@
 [data-dockbar-variant="pill"] .item[data-dockbar-active] .runningDot {
   background: var(--dockbar-fg);
 }
+
+/*
+ * Forced colors (e.g. Windows High Contrast) drop author backgrounds and shadows, which is how
+ * the active, pressed and hovered states, the dots and the badge are drawn. Redraw them with
+ * system colors, which forced colors keep.
+ */
+@media (forced-colors: active) {
+  /* Matches the variant rules' specificity (pill fills its active item) so it wins after them. */
+  [data-dockbar-variant] .item[data-dockbar-active="self"],
+  [data-dockbar-variant] .item[data-dockbar-active="self"]:hover {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  /* A toggle that is on: outlined, so it never reads as the active item. */
+  .item[data-dockbar-pressed] {
+    border: 2px solid CanvasText;
+  }
+
+  .item[data-dockbar-active="ancestor"] {
+    border: 2px dashed Highlight;
+  }
+
+  .item:hover:not(:disabled, [data-dockbar-active="self"]) {
+    color: Highlight;
+  }
+
+  .item:focus-visible {
+    outline-color: CanvasText;
+  }
+
+  .item[data-dockbar-active]::after,
+  .runningDot {
+    background: CanvasText;
+  }
+
+  .item[data-dockbar-active="self"]::after,
+  [data-dockbar-variant] .item[data-dockbar-active] .runningDot {
+    background: Highlight;
+  }
+
+  .label,
+  .badge {
+    border: 1px solid CanvasText;
+  }
+}

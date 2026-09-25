@@ -144,7 +144,9 @@ function AppMenuBar() {
   focus to/from the Back button on navigation, announces level changes via a live region, and
   respects `prefers-reduced-motion` (or force it via the `reducedMotion` prop). Keyboard follows
   the WAI-ARIA toolbar pattern: a single Tab stop, arrow keys (↑/↓ when vertical) to move,
-  Home/End, and `Escape` to go back.
+  Home/End, and `Escape` to go back. In forced-colors mode (Windows High Contrast) the active, pressed
+  and submenu-parent states, dots, separators, badges and tooltips are redrawn with system
+  colors so they stay distinguishable.
 
 ## Translating screen-reader texts
 
