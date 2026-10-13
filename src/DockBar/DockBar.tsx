@@ -226,36 +226,34 @@ export const DockBar = ({
   );
 
   const handleSelectPreview = useCallback(
-    (preview: DockBarPreview, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
-      if (!openPreviewsItem) {
-        return;
-      }
+    (
+      item: DockBarItem,
+      preview: DockBarPreview,
+      event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+    ) => {
       closePreviews();
-      if (!isActiveControlled && !isToggleItem(openPreviewsItem)) {
-        setUncontrolledActiveId(openPreviewsItem.id);
+      if (!isActiveControlled && !isToggleItem(item)) {
+        setUncontrolledActiveId(item.id);
       }
       preview.onSelect?.({
-        item: openPreviewsItem,
+        item,
         preview,
         path: breadcrumb,
         nativeEvent: event.nativeEvent,
       });
     },
-    [openPreviewsItem, closePreviews, isActiveControlled, breadcrumb],
+    [closePreviews, isActiveControlled, breadcrumb],
   );
 
   const handleClosePreview = useCallback(
-    (preview: DockBarPreview, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
-      if (openPreviewsItem) {
-        preview.onClose?.({
-          item: openPreviewsItem,
-          preview,
-          path: breadcrumb,
-          nativeEvent: event.nativeEvent,
-        });
-      }
+    (
+      item: DockBarItem,
+      preview: DockBarPreview,
+      event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
+    ) => {
+      preview.onClose?.({ item, preview, path: breadcrumb, nativeEvent: event.nativeEvent });
     },
-    [openPreviewsItem, breadcrumb],
+    [breadcrumb],
   );
 
   // Move focus to the newly-revealed Back button (drilling in) or back to the item the
@@ -271,9 +269,7 @@ export const DockBar = ({
 
   const handleActivate = useCallback(
     (item: DockBarItem, event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
-      if (item.disabled) {
-        return;
-      }
+      // DockBarItemButton rejects disabled activation before calling this handler.
       if (item.id === DOCKBAR_BACK_ID) {
         navigateBack();
         return;
@@ -409,7 +405,7 @@ export const DockBar = ({
         data-dockbar-variant={variant}
         data-dockbar-orientation={orientation}
         data-dockbar-position={position}
-        data-dockbar-edge={autoHideEnabled ? (dockEdge ?? undefined) : undefined}
+        data-dockbar-edge={autoHideEnabled ? dockEdge : undefined}
         data-dockbar-auto-hide={autoHideEnabled || undefined}
         data-dockbar-hidden={autoHideState.hidden || undefined}
         data-dockbar-instant={(autoHideEnabled && instant) || undefined}
@@ -469,8 +465,12 @@ export const DockBar = ({
             instant={instant}
             panelLabel={resolvedLabels.previewsPanel}
             closeLabel={resolvedLabels.closePreview}
-            onSelectPreview={handleSelectPreview}
-            onClosePreview={handleClosePreview}
+            onSelectPreview={(preview, event) =>
+              handleSelectPreview(openPreviewsItem, preview, event)
+            }
+            onClosePreview={(preview, event) =>
+              handleClosePreview(openPreviewsItem, preview, event)
+            }
             onRequestClose={closePreviews}
             onPointerEnter={previews.cancelClose}
             onPointerLeave={previews.leave}
@@ -486,7 +486,7 @@ export const DockBar = ({
           aria-hidden="true"
           className={styles.revealZone}
           data-dockbar-part="reveal-zone"
-          data-dockbar-edge={dockEdge ?? undefined}
+          data-dockbar-edge={dockEdge}
           onPointerEnter={autoHideState.handlePointerEnter}
           onPointerLeave={autoHideState.handlePointerLeave}
         />

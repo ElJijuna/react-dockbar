@@ -667,3 +667,39 @@ describe('DockBar previews edge cases', () => {
     }
   });
 });
+
+describe('DockBar disabled activation boundaries', () => {
+  it.each(['leaf', 'parent', 'link', 'previews'] as const)(
+    'blocks a disabled %s without selecting, navigating or opening previews',
+    (kind) => {
+      const onSelect = jest.fn();
+      const onNavigate = jest.fn();
+      const onPreviewsOpenChange = jest.fn();
+      const item: DockBarItem = {
+        id: 'disabled',
+        label: 'Disabled',
+        icon: null,
+        disabled: true,
+        onSelect,
+        ...(kind === 'parent' ? { children: [{ id: 'child', label: 'Child', icon: null }] } : {}),
+        ...(kind === 'link' ? { href: '/disabled' } : {}),
+        ...(kind === 'previews' ? { previews: mailPreviews() } : {}),
+      };
+      render(
+        <DockBar
+          items={[item]}
+          onNavigate={onNavigate}
+          onPreviewsOpenChange={onPreviewsOpenChange}
+        />,
+      );
+      const control = screen.getByLabelText(/Disabled/);
+      fireEvent.click(control);
+      fireEvent.pointerEnter(control, { pointerType: 'mouse' });
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(onNavigate).not.toHaveBeenCalled();
+      expect(onPreviewsOpenChange).not.toHaveBeenCalled();
+      expect(screen.queryByRole('group')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Child' })).toBeNull();
+    },
+  );
+});
