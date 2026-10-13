@@ -1450,3 +1450,47 @@ describe('DockBar active label regressions', () => {
     },
   );
 });
+
+describe('DockBar public API regressions', () => {
+  it('renders an empty toolbar and safely ignores navigation keys', () => {
+    render(
+      <DockBar
+        items={[]}
+        ariaLabel="Empty dock"
+        className="custom-dock"
+        style={{ opacity: 0.5 }}
+      />,
+    );
+    const toolbar = screen.getByRole('toolbar', { name: 'Empty dock' });
+    expect(toolbar).toHaveClass('custom-dock');
+    expect(toolbar).toHaveStyle({ opacity: '0.5' });
+    for (const key of ['ArrowRight', 'Home', 'End', 'Escape', 'Enter']) {
+      fireEvent.keyDown(toolbar, { key });
+    }
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it.each(['always', 'never', 'system'] as const)(
+    'honors reducedMotion=%s when the OS requests reduced motion',
+    (reducedMotion) => {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const spy = jest.spyOn(window, 'matchMedia').mockReturnValue({ ...media, matches: true });
+      try {
+        const { container } = render(
+          <DockBar items={nestedItems()} reducedMotion={reducedMotion} />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: /Settings/ }));
+        expect(getLevel(container)).toHaveAttribute(
+          'data-dockbar-phase',
+          reducedMotion === 'never' ? 'collapsing' : 'idle',
+        );
+        if (reducedMotion !== 'never') {
+          expect(screen.getByRole('button', { name: 'Wi-Fi' })).toBeInTheDocument();
+        }
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
+});
