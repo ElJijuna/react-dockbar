@@ -160,3 +160,247 @@ describe('useDockBarNavigation', () => {
     expect(result.current.breadcrumb).toEqual([nextItems[1]]);
   });
 });
+
+describe('useDockBarNavigation regressions', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('ignores Back and animationend at the root, and refuses leaves and empty parents', () => {
+    const onNavigate = jest.fn();
+    const { result } = renderNav({ onNavigate });
+    act(() => result.current.navigateBack());
+    act(() => result.current.navigateTo(rootItems[0]));
+    act(() => result.current.navigateTo({ id: 'empty', label: 'Empty', icon: null, children: [] }));
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.depth).toBe(0);
+    expect(result.current.focusRequest).toBeNull();
+    expect(jest.getTimerCount()).toBe(0);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it.each(['collapsing', 'expanding'])('ignores another parent and Back while %s', (phase) => {
+    const other: DockBarItem = {
+      id: 'other',
+      label: 'Other',
+      icon: null,
+      children: settingsChildren,
+    };
+    const { result } = renderHook(() => useDockBarNavigation([...rootItems, other], {}));
+    act(() => result.current.navigateTo(rootItems[1]));
+    if (phase === 'expanding') {
+      act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    }
+    act(() => result.current.navigateTo(other));
+    act(() => result.current.navigateBack());
+    expect(result.current.phase).toBe(phase);
+    expect(result.current.direction).toBe('forward');
+    if (phase === 'collapsing') {
+      act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    }
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(result.current.breadcrumb).toEqual([rootItems[1]]);
+  });
+
+  it('validates the initial path only on mount and backs through a nested breadcrumb', () => {
+    const inner: DockBarItem = {
+      id: 'inner',
+      label: 'Inner',
+      icon: null,
+      children: settingsChildren,
+    };
+    const outer: DockBarItem = { id: 'outer', label: 'Outer', icon: null, children: [inner] };
+    const onNavigate = jest.fn();
+    const { result, rerender } = renderHook(
+      ({ initialPathIds }) =>
+        useDockBarNavigation([outer], { initialPathIds, instant: true, onNavigate }),
+      { initialProps: { initialPathIds: ['outer', 'inner', 'missing'] } },
+    );
+    expect(result.current.depth).toBe(2);
+    expect(result.current.levelItems).toBe(settingsChildren);
+    expect(onNavigate).not.toHaveBeenCalled();
+    rerender({ initialPathIds: [] });
+    expect(result.current.depth).toBe(2);
+    act(() => result.current.navigateBack());
+    expect(result.current.focusRequest).toEqual({ id: 'inner' });
+    expect(onNavigate).toHaveBeenLastCalledWith({
+      direction: 'back',
+      depth: 1,
+      path: [outer],
+      item: inner,
+    });
+    act(() => result.current.navigateBack());
+    expect(result.current.depth).toBe(0);
+    expect(result.current.focusRequest).toEqual({ id: 'outer' });
+  });
+
+  it.each(['removed', 'empty children'])(
+    'drops an invalidated parent path when it has %s',
+    (change) => {
+      const inner: DockBarItem = {
+        id: 'inner',
+        label: 'Inner',
+        icon: null,
+        children: settingsChildren,
+      };
+      const outer: DockBarItem = { id: 'outer', label: 'Outer', icon: null, children: [inner] };
+      const onNavigate = jest.fn();
+      const { result, rerender } = renderHook(
+        (items: DockBarItem[]) =>
+          useDockBarNavigation(items, {
+            instant: true,
+            initialPathIds: ['outer', 'inner'],
+            onNavigate,
+          }),
+        { initialProps: [outer] },
+      );
+      const children = change === 'removed' ? [rootItems[0]] : [{ ...inner, children: [] }];
+      const updated = { ...outer, children };
+      rerender([updated]);
+      expect(result.current.depth).toBe(1);
+      expect(result.current.breadcrumb).toEqual([updated]);
+      expect(result.current.levelItems).toBe(children);
+      expect(onNavigate).not.toHaveBeenCalled();
+      act(() => result.current.navigateBack());
+      expect(result.current.depth).toBe(0);
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('uses current items and the latest callback when navigation completes', () => {
+    const oldCallback = jest.fn();
+    const latest = jest.fn();
+    const { result, rerender } = renderHook(
+      ({ items, onNavigate }) => useDockBarNavigation(items, { onNavigate }),
+      { initialProps: { items: rootItems, onNavigate: oldCallback } },
+    );
+    act(() => result.current.navigateTo(rootItems[1]));
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    const renamed = { ...rootItems[1], label: 'Updated settings' };
+    rerender({ items: [rootItems[0], renamed], onNavigate: latest });
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(oldCallback).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledWith({
+      direction: 'forward',
+      depth: 1,
+      path: [renamed],
+      item: renamed,
+    });
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    act(() => jest.advanceTimersByTime(1000));
+    expect(latest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['forward', 'back'])(
+    'does not report a %s navigation whose target disappears',
+    (direction) => {
+      const onNavigate = jest.fn();
+      const { result, rerender } = renderHook(
+        (items: DockBarItem[]) =>
+          useDockBarNavigation(items, {
+            onNavigate,
+            initialPathIds: direction === 'back' ? ['settings'] : [],
+          }),
+        { initialProps: rootItems },
+      );
+      act(() => {
+        if (direction === 'forward') {
+          result.current.navigateTo(rootItems[1]);
+        } else {
+          result.current.navigateBack();
+        }
+      });
+      act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+      rerender([rootItems[0]]);
+      act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+      expect(result.current.phase).toBe('idle');
+      expect(result.current.depth).toBe(0);
+      expect(onNavigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it('cancels the timeout safety net when animation events advance both phases', () => {
+    const onNavigate = jest.fn();
+    const { result } = renderNav({ animationDuration: 200, onNavigate });
+    act(() => result.current.navigateTo(rootItems[1]));
+    act(() => jest.advanceTimersByTime(249));
+    expect(result.current.phase).toBe('collapsing');
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(jest.getTimerCount()).toBe(1);
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(jest.getTimerCount()).toBe(0);
+    act(() => jest.advanceTimersByTime(1000));
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['collapsing', 'expanding'])(
+    'clears the pending timeout on unmount during %s',
+    (phase) => {
+      const onNavigate = jest.fn();
+      const { result, unmount } = renderNav({ onNavigate });
+      act(() => result.current.navigateTo(rootItems[1]));
+      if (phase === 'expanding') {
+        act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+      }
+      unmount();
+      expect(jest.getTimerCount()).toBe(0);
+      act(() => jest.advanceTimersByTime(1000));
+      expect(onNavigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it('finishes an in-flight transition when instant is enabled and ignores stale animation events', () => {
+    const onNavigate = jest.fn();
+    const { result, rerender } = renderHook(
+      ({ instant }) => useDockBarNavigation(rootItems, { instant, onNavigate }),
+      { initialProps: { instant: false } },
+    );
+    act(() => result.current.navigateTo(rootItems[1]));
+    rerender({ instant: true });
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.depth).toBe(1);
+    expect(jest.getTimerCount()).toBe(0);
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates a new focus request each time the same parent is entered', () => {
+    const { result } = renderNav({ instant: true });
+    act(() => result.current.navigateTo(rootItems[1]));
+    const first = result.current.focusRequest;
+    act(() => result.current.navigateBack());
+    act(() => result.current.navigateTo(rootItems[1]));
+    expect(result.current.focusRequest).toEqual(first);
+    expect(result.current.focusRequest).not.toBe(first);
+  });
+});
+
+describe('useDockBarNavigation duplicate animation events', () => {
+  it('advances only once when duplicate collapse events arrive in the same batch', () => {
+    const { result } = renderNav();
+    act(() => result.current.navigateTo(rootItems[1]));
+    const finishCollapse = result.current.handleLevelAnimationEnd;
+    act(() => {
+      finishCollapse(levelAnimationEnd);
+      finishCollapse(levelAnimationEnd);
+    });
+    expect(result.current.phase).toBe('expanding');
+    expect(result.current.depth).toBe(1);
+    expect(result.current.breadcrumb).toEqual([rootItems[1]]);
+  });
+
+  it('emits one callback and one focus request for duplicate expand events', () => {
+    const onNavigate = jest.fn();
+    const { result } = renderNav({ onNavigate });
+    act(() => result.current.navigateTo(rootItems[1]));
+    act(() => result.current.handleLevelAnimationEnd(levelAnimationEnd));
+    const finishExpand = result.current.handleLevelAnimationEnd;
+    act(() => {
+      finishExpand(levelAnimationEnd);
+      finishExpand(levelAnimationEnd);
+    });
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.focusRequest).toEqual({ id: DOCKBAR_BACK_ID });
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+});
