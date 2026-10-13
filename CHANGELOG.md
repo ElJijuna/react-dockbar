@@ -1,3 +1,11 @@
+# [1.4.0](https://github.com/ElJijuna/react-dockbar/compare/v1.3.0...v1.4.0) (2026-10-13)
+
+
+### Features
+
+* add integration tests for DockBar disabled activation boundaries to validate behavior of disabled items ([adc1d90](https://github.com/ElJijuna/react-dockbar/commit/adc1d90d0abd3d1add06f104d95082f506fec67b))
+* add showActiveLabel prop to display active item labels in DockBar ([3b3ea95](https://github.com/ElJijuna/react-dockbar/commit/3b3ea9525a4370d08bb0e8ea06f843a6a2bd47c8))
+
 # [1.3.0](https://github.com/ElJijuna/react-dockbar/compare/v1.2.0...v1.3.0) (2026-09-25)
 
 
