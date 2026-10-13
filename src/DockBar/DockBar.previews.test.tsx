@@ -379,3 +379,207 @@ describe('DockBar previews', () => {
     expect(screen.getByRole('button', { name: 'Cerrar Draft' })).toBeInTheDocument();
   });
 });
+
+describe('DockBar previews integration regressions', () => {
+  it.each(['controlled', 'toggle'] as const)(
+    'does not replace the active item when selecting a %s preview',
+    async (mode) => {
+      const user = userEvent.setup();
+      const previews = mailPreviews();
+      const dockItems = items(previews);
+      if (mode === 'toggle') {
+        dockItems[1].pressed = true;
+      }
+      render(
+        <DockBar
+          items={dockItems}
+          activeId={mode === 'controlled' ? 'finder' : undefined}
+          defaultActiveId="finder"
+          openPreviewsId="mail"
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: 'Inbox' }));
+      expect(screen.getByRole('button', { name: 'Finder' })).toHaveAttribute(
+        'aria-current',
+        'true',
+      );
+      expect(mailButton()).not.toHaveAttribute('aria-current');
+      expect(previews[0].onSelect).toHaveBeenCalledTimes(1);
+      expect(dockItems[1].onSelect).not.toHaveBeenCalled();
+    },
+  );
+
+  it('closes an existing panel when selecting an item with a single window', async () => {
+    const user = userEvent.setup();
+    const dockItems = items();
+    render(<DockBar items={dockItems} />);
+    await user.click(mailButton());
+    await user.click(screen.getByRole('button', { name: 'Notes, 1 open window' }));
+    expect(panel()).not.toBeInTheDocument();
+    expect(dockItems[2].onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Notes, 1 open window' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+  });
+
+  it('dismisses with Escape from the anchor instead of navigating out of the submenu', async () => {
+    const user = userEvent.setup();
+    const onNavigate = jest.fn();
+    const dockItems: DockBarItem[] = [{ id: 'apps', label: 'Apps', icon: null, children: items() }];
+    render(<DockBar items={dockItems} activeId="mail" openActiveLevel onNavigate={onNavigate} />);
+    await user.click(mailButton());
+    expect(panel()).toBeInTheDocument();
+    act(() => mailButton().focus());
+    await user.keyboard('{Escape}');
+    expect(panel()).not.toBeInTheDocument();
+    expect(mailButton()).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it('closes a pinned panel when navigation to a different level starts', async () => {
+    const user = userEvent.setup();
+    const onPreviewsOpenChange = jest.fn();
+    render(
+      <DockBar
+        items={[
+          ...items(),
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: null,
+            children: [{ id: 'wifi', label: 'Wi-Fi', icon: null }],
+          },
+        ]}
+        onPreviewsOpenChange={onPreviewsOpenChange}
+      />,
+    );
+    await user.click(mailButton());
+    await user.click(screen.getByRole('button', { name: /Settings/ }));
+    expect(panel()).not.toBeInTheDocument();
+    expect(onPreviewsOpenChange.mock.calls).toEqual([['mail'], [null]]);
+  });
+
+  it.each(['removed item', 'empty previews'] as const)(
+    'dismisses the panel after receiving %s',
+    async (change) => {
+      const user = userEvent.setup();
+      const onPreviewsOpenChange = jest.fn();
+      const dockItems = items();
+      const { rerender } = render(
+        <DockBar items={dockItems} onPreviewsOpenChange={onPreviewsOpenChange} />,
+      );
+      await user.click(mailButton());
+      const updated =
+        change === 'removed item'
+          ? dockItems.filter((item) => item.id !== 'mail')
+          : dockItems.map((item) => (item.id === 'mail' ? { ...item, previews: [] } : item));
+      rerender(<DockBar items={updated} onPreviewsOpenChange={onPreviewsOpenChange} />);
+      expect(panel()).not.toBeInTheDocument();
+      expect(onPreviewsOpenChange).toHaveBeenLastCalledWith(null);
+      expect(onPreviewsOpenChange).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each(['missing', 'separator', 'parent', 'nested'])(
+    'rejects a controlled previews id that refers to %s',
+    (openPreviewsId) => {
+      const onPreviewsOpenChange = jest.fn();
+      render(
+        <DockBar
+          items={[
+            ...items(),
+            { type: 'separator', id: 'separator' },
+            {
+              id: 'parent',
+              label: 'Parent',
+              icon: null,
+              previews: mailPreviews(),
+              children: [{ id: 'nested', label: 'Nested', icon: null, previews: mailPreviews() }],
+            },
+          ]}
+          openPreviewsId={openPreviewsId}
+          onPreviewsOpenChange={onPreviewsOpenChange}
+        />,
+      );
+      expect(screen.queryByRole('group')).not.toBeInTheDocument();
+      expect(onPreviewsOpenChange).toHaveBeenCalledWith(null);
+    },
+  );
+
+  it.each([
+    ['left-center', 'ArrowRight', 'right'],
+    ['right-center', 'ArrowLeft', 'left'],
+  ] as const)('opens previews away from a vertical dock at %s', async (position, openKey, side) => {
+    const user = userEvent.setup();
+    render(<DockBar items={items()} orientation="vertical" position={position} />);
+    act(() => mailButton().focus());
+    await user.keyboard(`{${openKey}}`);
+    expect(panel()).toHaveAttribute('data-dockbar-side', side);
+    expect(screen.getByRole('button', { name: 'Draft' })).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button', { name: 'Inbox' })).toHaveFocus();
+  });
+
+  it('supplies the current breadcrumb and native events to preview select and close callbacks', async () => {
+    const user = userEvent.setup();
+    const list = mailPreviews();
+    const dockItems = items(list);
+    const parent: DockBarItem = { id: 'apps', label: 'Apps', icon: null, children: dockItems };
+    render(<DockBar items={[parent]} activeId="mail" openActiveLevel />);
+    await user.click(mailButton());
+    const closeEvent = new MouseEvent('click', { bubbles: true });
+    fireEvent(screen.getByRole('button', { name: 'Close Draft' }), closeEvent);
+    expect(list[1].onClose).toHaveBeenCalledWith(
+      expect.objectContaining({
+        item: dockItems[1],
+        preview: list[1],
+        path: [parent],
+        nativeEvent: closeEvent,
+      }),
+    );
+    const selectEvent = new MouseEvent('click', { bubbles: true });
+    fireEvent(screen.getByRole('button', { name: 'Inbox' }), selectEvent);
+    expect(list[0].onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preview: list[0],
+        path: [parent],
+        nativeEvent: selectEvent,
+      }),
+    );
+  });
+
+  it('selects a preview without a callback and restores keyboard focus to its item', async () => {
+    const user = userEvent.setup();
+    const list = mailPreviews().map((preview) => ({ ...preview, onSelect: undefined }));
+    render(<DockBar items={items(list)} />);
+    act(() => mailButton().focus());
+    await user.keyboard('{ArrowUp}{Enter}');
+    expect(panel()).not.toBeInTheDocument();
+    expect(mailButton()).toHaveFocus();
+    expect(mailButton()).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('keeps two docks previews and focus restoration independent', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <DockBar items={items()} ariaLabel="First dock" />
+        <DockBar items={items()} ariaLabel="Second dock" />
+      </>,
+    );
+    const anchors = screen.getAllByRole('button', { name: 'Mail, 2 open windows' });
+    act(() => anchors[0].focus());
+    await user.keyboard('{ArrowUp}');
+    const firstId = anchors[0].getAttribute('aria-controls');
+    expect(screen.getAllByRole('group')).toHaveLength(1);
+    await user.keyboard('{Escape}');
+    expect(anchors[0]).toHaveFocus();
+    act(() => anchors[1].focus());
+    await user.keyboard('{ArrowUp}');
+    expect(anchors[1].getAttribute('aria-controls')).not.toBe(firstId);
+    await user.keyboard('{Escape}');
+    expect(anchors[1]).toHaveFocus();
+  });
+});
