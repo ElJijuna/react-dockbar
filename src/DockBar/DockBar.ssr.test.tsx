@@ -49,4 +49,19 @@ describe('DockBar server rendering', () => {
     expect(html).toContain('data-dockbar-part="back-area"');
     expect(consoleError).not.toHaveBeenCalled();
   });
+
+  it.each([false, true])(
+    'renders active labels without a DOM (openActiveLevel=%s)',
+    (openActiveLevel) => {
+      const html = renderToString(
+        <DockBar items={items} activeId="wifi" showActiveLabel openActiveLevel={openActiveLevel} />,
+      );
+      expect(html.match(/data-dockbar-inline-label="true"/g)).toHaveLength(1);
+      expect(html).toContain(
+        `class="inlineLabel" aria-hidden="true">${openActiveLevel ? 'Wi-Fi' : 'Settings'}</span>`,
+      );
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(consoleWarn).not.toHaveBeenCalled();
+    },
+  );
 });

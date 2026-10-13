@@ -1323,3 +1323,130 @@ describe('DockBar active labels', () => {
     expect(button.querySelector('.label')).toBeNull();
   });
 });
+
+describe('DockBar active label regressions', () => {
+  it('moves the label only when an animated level transition finishes collapsing', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <DockBar items={nestedItems()} activeId="wifi" showActiveLabel reducedMotion="never" />,
+    );
+    await user.click(screen.getByRole('button', { name: /Settings/ }));
+    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'collapsing');
+    expect(container.querySelector('[data-dockbar-inline-label]')).toHaveTextContent('Settings');
+    endLevelTransition(container);
+    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'expanding');
+    expect(container.querySelector('[data-dockbar-inline-label]')).toHaveTextContent('Wi-Fi');
+    endLevelTransition(container);
+    expect(container.querySelectorAll('[data-dockbar-inline-label]')).toHaveLength(1);
+  });
+
+  it('keeps the browsed level when controlled selection moves outside it', () => {
+    const items = nestedItems();
+    const { container, rerender } = render(
+      <DockBar items={items} activeId="wifi" openActiveLevel showActiveLabel />,
+    );
+    expect(screen.getByRole('button', { name: 'Wi-Fi' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    rerender(<DockBar items={items} activeId="finder" openActiveLevel showActiveLabel />);
+    expect(screen.getByRole('button', { name: 'Wi-Fi' })).toBeInTheDocument();
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+    rerender(<DockBar items={items} activeId="bluetooth" openActiveLevel showActiveLabel />);
+    expect(screen.getByRole('button', { name: 'Bluetooth' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+  });
+
+  it('updates renamed items and clears the label when the active item is removed', () => {
+    const items = flatItems();
+    const { container, rerender } = render(
+      <DockBar items={items} activeId="finder" showActiveLabel />,
+    );
+    rerender(
+      <DockBar
+        items={[{ ...items[0], label: 'New name' }, ...items.slice(1)]}
+        activeId="finder"
+        showActiveLabel
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'New name' }).querySelector('.inlineLabel'),
+    ).toHaveTextContent('New name');
+    rerender(<DockBar items={items.slice(1)} activeId="finder" showActiveLabel />);
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+  });
+
+  it('does not change selection when a disabled item is clicked', async () => {
+    const user = userEvent.setup();
+    render(<DockBar items={flatItems()} defaultActiveId="finder" showActiveLabel />);
+    await user.click(screen.getByRole('button', { name: 'Trash' }));
+    expect(screen.getByRole('button', { name: 'Finder' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    expect(screen.getByRole('button', { name: 'Trash' })).not.toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+  });
+
+  it.each(['active selection', 'label prop'] as const)(
+    're-measures magnification after changing the %s while the pointer remains inside',
+    async (change) => {
+      const items = flatItems();
+      const { container, rerender } = render(
+        <DockBar
+          items={items}
+          activeId="finder"
+          showActiveLabel
+          magnification={{ scale: 1.5, distance: 150 }}
+        />,
+      );
+      const rect = (left: number): DOMRect => ({
+        x: left,
+        y: 0,
+        left,
+        top: 0,
+        width: 50,
+        height: 50,
+        right: left + 50,
+        bottom: 50,
+        toJSON: () => ({}),
+      });
+      const spies = Array.from(
+        container.querySelectorAll<HTMLElement>('[data-dockbar-part="item"]'),
+      ).map((item, index) =>
+        jest.spyOn(item, 'getBoundingClientRect').mockReturnValue(rect(index * 60)),
+      );
+      const move = async () => {
+        fireEvent.pointerMove(getLevel(container), { clientX: 85, pointerType: 'mouse' });
+        await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      };
+      fireEvent.pointerEnter(getLevel(container), { clientX: 85, pointerType: 'mouse' });
+      await move();
+      expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute('data-dockbar-hovered');
+      // Changing the label's location or visibility changes the items' centers.
+      spies.forEach((spy, index) => {
+        spy.mockReturnValue(rect(index * 60 - 60));
+      });
+      rerender(
+        <DockBar
+          items={items}
+          activeId={change === 'active selection' ? 'mail' : 'finder'}
+          showActiveLabel={change === 'active selection'}
+          magnification={{ scale: 1.5, distance: 150 }}
+        />,
+      );
+      await move();
+      expect(screen.getByRole('button', { name: 'Photos' })).toHaveAttribute(
+        'data-dockbar-hovered',
+      );
+      expect(
+        screen
+          .getByRole('button', { name: 'Photos' })
+          .style.getPropertyValue('--dockbar-item-scale'),
+      ).toBe('1.5');
+      expect(screen.getByRole('button', { name: 'Mail' })).not.toHaveAttribute(
+        'data-dockbar-hovered',
+      );
+    },
+  );
+});
