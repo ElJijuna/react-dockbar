@@ -50,6 +50,7 @@ export const DockBar = ({
   activeId: activeIdProp,
   defaultActiveId = null,
   openActiveLevel = false,
+  showActiveLabel = false,
   colorScheme = 'auto',
   variant = 'pill',
   size = 'md',
@@ -442,6 +443,7 @@ export const DockBar = ({
           magnification={magnification}
           variant={variant}
           activePathIds={activePathIds}
+          showActiveLabel={showActiveLabel}
           tabStopId={roving.tabStopId}
           parentItemLabel={resolvedLabels.parentItem}
           previewsItemLabel={resolvedLabels.previewsItem}

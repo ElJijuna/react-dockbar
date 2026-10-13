@@ -1199,3 +1199,127 @@ describe('DockBar', () => {
     });
   });
 });
+
+describe('DockBar active labels', () => {
+  it('opts in and follows controlled selection without duplicating the label', () => {
+    const items = flatItems();
+    const { container, rerender } = render(<DockBar items={items} activeId="finder" />);
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+    rerender(<DockBar items={items} activeId="finder" showActiveLabel />);
+    const finder = screen.getByRole('button', { name: 'Finder' });
+    expect(finder).toHaveAttribute('data-dockbar-inline-label');
+    expect(finder.querySelectorAll('.inlineLabel')).toHaveLength(1);
+    expect(finder.querySelector('.label')).toBeNull();
+    expect(finder.querySelector('.inlineLabel')).toHaveAttribute('aria-hidden', 'true');
+    rerender(<DockBar items={items} activeId="mail" showActiveLabel />);
+    expect(finder).not.toHaveAttribute('data-dockbar-inline-label');
+    expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    rerender(<DockBar items={items} activeId="mail" showActiveLabel={false} />);
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+    rerender(<DockBar items={items} activeId="missing" showActiveLabel />);
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+    rerender(<DockBar items={items} activeId={null} showActiveLabel />);
+    expect(container.querySelector('[data-dockbar-inline-label]')).toBeNull();
+  });
+
+  it('follows uncontrolled keyboard selection and keeps pressed toggles icon-only', async () => {
+    const user = userEvent.setup();
+    render(
+      <DockBar
+        items={[
+          ...flatItems(),
+          { id: 'toggle', label: 'Toggle', icon: <span>T</span>, pressed: true },
+        ]}
+        defaultActiveId="finder"
+        showActiveLabel
+      />,
+    );
+    await user.tab();
+    await user.keyboard('{ArrowRight}{Enter}');
+    expect(screen.getByRole('button', { name: 'Mail' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    expect(screen.getByRole('button', { name: 'Finder' })).not.toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    expect(screen.getByRole('button', { name: 'Toggle' })).not.toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+  });
+
+  it('shows the visible ancestor, then the active child, and excludes Back', async () => {
+    const user = userEvent.setup();
+    render(
+      <DockBar
+        items={nestedItems()}
+        defaultActiveId="wifi"
+        showActiveLabel
+        reducedMotion="always"
+      />,
+    );
+    const parent = screen.getByRole('button', { name: /Settings/ });
+    expect(parent).toHaveAttribute('data-dockbar-inline-label');
+    expect(parent.querySelector('.inlineLabel')).toHaveTextContent('Settings');
+    await user.click(parent);
+    expect(screen.getByRole('button', { name: 'Wi-Fi' })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    expect(screen.getByRole('button', { name: 'Back' })).not.toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: /Settings/ })).toHaveAttribute(
+      'data-dockbar-inline-label',
+    );
+  });
+
+  it('preserves link names, badges and inline labels while previews are open', () => {
+    const longLabel = 'A very long application name that should be truncated';
+    const { rerender } = render(
+      <DockBar
+        items={[
+          {
+            id: 'app',
+            label: longLabel,
+            icon: <span>A</span>,
+            href: '/app',
+            badge: 2,
+            'aria-label': 'Application',
+            previews: [{ id: 'window', title: 'Window', thumbnail: <span>Preview</span> }],
+          },
+        ]}
+        activeId="app"
+        openPreviewsId="app"
+        showActiveLabel
+      />,
+    );
+    const link = screen.getByRole('link', { name: 'Application' });
+    expect(link).toHaveAttribute('aria-current', 'page');
+
+    expect(link.querySelector('.inlineLabel')).toHaveTextContent(longLabel);
+    expect(link.querySelector('.label')).toBeNull();
+    rerender(
+      <DockBar
+        items={[
+          {
+            id: 'app',
+            label: longLabel,
+            icon: <span>A</span>,
+            badge: 2,
+            'aria-label': 'Application',
+            previews: [{ id: 'window', title: 'Window', thumbnail: <span>Preview</span> }],
+          },
+        ]}
+        activeId="app"
+        openPreviewsId="app"
+        showActiveLabel
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Application' });
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(button.querySelector('.inlineLabel')).toHaveTextContent(longLabel);
+    expect(button.querySelector('.label')).toBeNull();
+  });
+});

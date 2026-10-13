@@ -130,6 +130,12 @@ function AppMenuBar() {
   `aria-current`; parents containing a nested active item get a dimmer dot. Add
   `openActiveLevel` to start inside the submenu that holds the active item (mount only — later
   `activeId` changes never move the user away from the level they are browsing).
+- **Active label**: add `showActiveLabel` to keep the active item's name to the right of its
+  icon. If the active item is nested, its visible ancestor shows its own name. Works with
+  every variant and orientation; long names truncate at 20ch. Defaults to `false`.
+  ```tsx
+  <DockBar items={items} showActiveLabel />
+  ```
 - **Hover magnification**: items scale up under the pointer, tapering off for nearby
   neighbors, matching macOS Dock behavior. Defaults depend on the variant (pronounced for
   `glass`/`solid`, subtle for `pill`); pass `magnification={{ scale, distance }}` to override

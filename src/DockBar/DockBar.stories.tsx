@@ -434,3 +434,12 @@ export const SpanishLabels: Story = {
     },
   },
 };
+
+/** Select items or enter Settings to see the visible active label follow navigation. */
+export const ActiveLabel: Story = {
+  args: {
+    items: nestedItems,
+    defaultActiveId: 'wifi',
+    showActiveLabel: true,
+  },
+};

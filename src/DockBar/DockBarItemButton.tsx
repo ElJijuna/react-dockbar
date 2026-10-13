@@ -33,6 +33,7 @@ export interface DockBarItemButtonProps {
   hovered: boolean;
   active: boolean;
   containsActive: boolean;
+  showActiveLabel?: boolean;
   magnifyTransitionMs: number;
   onFocusItem: (element: HTMLElement) => void;
   onBlurItem: () => void;
@@ -58,6 +59,7 @@ export const DockBarItemButton = ({
   hovered,
   active,
   containsActive,
+  showActiveLabel = false,
   magnifyTransitionMs,
   onFocusItem,
   onBlurItem,
@@ -67,6 +69,7 @@ export const DockBarItemButton = ({
   const isParent = !isBack && Boolean(item.children?.length);
   const isToggle = !isBack && isToggleItem(item);
   const pressed = isToggle && item.pressed === true;
+  const inlineLabel = showActiveLabel && !isBack && (active || containsActive);
   const state: DockBarItemState = { hovered, isBack, active, containsActive, pressed };
   const childCount = item.children?.filter((entry) => !isSeparator(entry)).length ?? 0;
   const previewCount = isBack ? 0 : getPreviews(item).length;
@@ -129,7 +132,7 @@ export const DockBarItemButton = ({
       <span className={styles.icon} aria-hidden="true">
         {item.icon}
       </span>
-      <span className={styles.label} aria-hidden="true">
+      <span className={inlineLabel ? styles.inlineLabel : styles.label} aria-hidden="true">
         {item.label}
       </span>
       {previewCount > 0 ? (
@@ -153,6 +156,7 @@ export const DockBarItemButton = ({
     style,
     'data-dockbar-part': 'item' as const,
     'data-dockbar-item-id': item.id,
+    'data-dockbar-inline-label': inlineLabel || undefined,
     'data-dockbar-hovered': hovered || undefined,
     'data-dockbar-active': active ? 'self' : containsActive ? 'ancestor' : undefined,
     'aria-current': active ? (item.href ? ('page' as const) : true) : undefined,

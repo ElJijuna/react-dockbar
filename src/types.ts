@@ -178,6 +178,8 @@ export interface DockBarProps {
    * user away from the level they are browsing. Default `false`.
    */
   openActiveLevel?: boolean;
+  /** Show the active item or its visible ancestor's label beside its icon. Default `false`. */
+  showActiveLabel?: boolean;
   colorScheme?: DockBarColorScheme;
   /** Visual style. Default `'pill'`. */
   variant?: DockBarVariant;

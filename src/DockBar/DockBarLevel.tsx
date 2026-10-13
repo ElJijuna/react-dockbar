@@ -25,6 +25,7 @@ export interface DockBarLevelProps {
   variant: DockBarVariant;
   /** Root-first ids of the active item and its ancestors. */
   activePathIds: string[];
+  showActiveLabel?: boolean;
   /** Id of the single item reachable with Tab (roving tabindex). */
   tabStopId: string | null;
   parentItemLabel: Required<DockBarLabels>['parentItem'];
@@ -55,6 +56,7 @@ export const DockBarLevel = ({
   magnification,
   variant,
   activePathIds,
+  showActiveLabel = false,
   tabStopId,
   parentItemLabel,
   previewsItemLabel,
@@ -76,10 +78,10 @@ export const DockBarLevel = ({
   });
   const { invalidate } = magnify;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `items` is the trigger — adding, removing or reordering items in place moves them, so cached positions must be dropped.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `items`, `activePathIds`, and `showActiveLabel` are layout triggers — adding, removing or reordering items in place moves them, so cached positions must be dropped.
   useEffect(() => {
     invalidate();
-  }, [items, invalidate]);
+  }, [items, activePathIds, showActiveLabel, invalidate]);
 
   const style = { '--dockbar-transition-duration': `${animationDuration}ms` } as CSSProperties;
   let itemIndex = -1;
@@ -127,6 +129,7 @@ export const DockBarLevel = ({
             onPreviewsLeave={onPreviewsLeave}
             hovered={magnify.hoveredIndex === index}
             active={item.id === activeId}
+            showActiveLabel={showActiveLabel}
             containsActive={item.id !== activeId && activePathIds.includes(item.id)}
             magnifyTransitionMs={magnify.transitionMs}
             onFocusItem={magnify.focusItem}
