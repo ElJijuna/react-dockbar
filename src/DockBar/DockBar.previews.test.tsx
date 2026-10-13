@@ -409,12 +409,13 @@ describe('DockBar previews integration regressions', () => {
     },
   );
 
-  it('closes an existing panel when selecting an item with a single window', async () => {
+  it('closes an existing panel on programmatic activation of an item with a single window', async () => {
     const user = userEvent.setup();
     const dockItems = items();
     render(<DockBar items={dockItems} />);
     await user.click(mailButton());
-    await user.click(screen.getByRole('button', { name: 'Notes, 1 open window' }));
+    // Programmatic activation has no pointerdown to dismiss the panel beforehand.
+    act(() => screen.getByRole('button', { name: 'Notes, 1 open window' }).click());
     expect(panel()).not.toBeInTheDocument();
     expect(dockItems[2].onSelect).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Notes, 1 open window' })).toHaveAttribute(
@@ -581,5 +582,88 @@ describe('DockBar previews integration regressions', () => {
     expect(anchors[1].getAttribute('aria-controls')).not.toBe(firstId);
     await user.keyboard('{Escape}');
     expect(anchors[1]).toHaveFocus();
+  });
+});
+
+describe('DockBar previews edge cases', () => {
+  it('rejects an empty controlled preview id and requests closure exactly once', () => {
+    const onPreviewsOpenChange = jest.fn();
+    const { rerender } = render(
+      <DockBar items={items()} openPreviewsId="" onPreviewsOpenChange={onPreviewsOpenChange} />,
+    );
+    expect(screen.queryByRole('group')).toBeNull();
+    expect(onPreviewsOpenChange.mock.calls).toEqual([[null]]);
+    rerender(
+      <DockBar items={items()} openPreviewsId="" onPreviewsOpenChange={onPreviewsOpenChange} />,
+    );
+    expect(onPreviewsOpenChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('escapes item ids when positioning previews and restoring focus', async () => {
+    const user = userEvent.setup();
+    const dockItems = items();
+    dockItems[1].id = 'mail["inbox"] #1';
+    render(<DockBar items={dockItems} />);
+    act(() => mailButton().focus());
+    await user.keyboard('{ArrowUp}');
+    expect(panel()).toBeInTheDocument();
+    expect(panel()?.style.top).not.toBe('');
+    expect(screen.getByRole('button', { name: 'Draft' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(panel()).not.toBeInTheDocument();
+    expect(mailButton()).toHaveFocus();
+  });
+
+  it('updates open preview content without selecting an item or stealing focus', async () => {
+    const user = userEvent.setup();
+    const onPreviewsOpenChange = jest.fn();
+    const list = mailPreviews();
+    const { rerender } = render(
+      <DockBar items={items(list)} onPreviewsOpenChange={onPreviewsOpenChange} />,
+    );
+    act(() => mailButton().focus());
+    await user.keyboard('{ArrowUp}');
+    const updated = list.map((preview) => ({ ...preview, title: `${preview.title} updated` }));
+    rerender(<DockBar items={items(updated)} onPreviewsOpenChange={onPreviewsOpenChange} />);
+    expect(screen.getByRole('button', { name: 'Draft updated' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Inbox updated' })).toBeInTheDocument();
+    expect(mailButton()).not.toHaveAttribute('aria-current');
+    expect(onPreviewsOpenChange.mock.calls).toEqual([['mail']]);
+  });
+
+  it('does not move outside focus when a controlled panel is closed externally', () => {
+    const dockItems = items();
+    const view = (openPreviewsId: string | null) => (
+      <>
+        <DockBar items={dockItems} openPreviewsId={openPreviewsId} />
+        <button type="button">Outside</button>
+      </>
+    );
+    const { rerender } = render(view('mail'));
+    const outside = screen.getByRole('button', { name: 'Outside' });
+    act(() => outside.focus());
+    rerender(view(null));
+    expect(panel()).not.toBeInTheDocument();
+    expect(outside).toHaveFocus();
+  });
+
+  it('pins an already hovered panel on click, then closes it on the next click', () => {
+    jest.useFakeTimers();
+    try {
+      const onPreviewsOpenChange = jest.fn();
+      render(<DockBar items={items()} onPreviewsOpenChange={onPreviewsOpenChange} />);
+      hover(mailButton());
+      act(() => jest.advanceTimersByTime(400));
+      fireEvent.click(mailButton(), { detail: 1 });
+      unhover(mailButton());
+      act(() => jest.advanceTimersByTime(1000));
+      expect(panel()).toBeInTheDocument();
+      expect(onPreviewsOpenChange.mock.calls).toEqual([['mail']]);
+      fireEvent.click(mailButton(), { detail: 1 });
+      expect(panel()).not.toBeInTheDocument();
+      expect(onPreviewsOpenChange.mock.calls).toEqual([['mail'], [null]]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

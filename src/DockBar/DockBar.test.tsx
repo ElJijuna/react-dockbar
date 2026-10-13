@@ -1494,3 +1494,21 @@ describe('DockBar public API regressions', () => {
     },
   );
 });
+
+describe('DockBar transition preference changes', () => {
+  it('completes an active transition when reduced motion is enabled without duplicating navigation', () => {
+    const items = nestedItems();
+    const onNavigate = jest.fn();
+    const { container, rerender } = render(
+      <DockBar items={items} reducedMotion="never" onNavigate={onNavigate} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Settings/ }));
+    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'collapsing');
+    rerender(<DockBar items={items} reducedMotion="always" onNavigate={onNavigate} />);
+    expect(getLevel(container)).toHaveAttribute('data-dockbar-phase', 'idle');
+    expect(screen.getByRole('button', { name: 'Back' })).toHaveFocus();
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    fireEvent.animationEnd(getLevel(container));
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+});
